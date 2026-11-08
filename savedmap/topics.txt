@@ -1,0 +1,56 @@
+# Broad topics for the topic filter: each item gets the 1-3 closest ones (e5 similarity, or the
+# picture for items without words). Edit in Settings → Topics (or here for the default list);
+# the next `savedmap process` or update re-tags everything.
+books & reading
+film & tv
+anime & manga
+music
+art & illustration
+pixel art & game art
+graphic design & typography
+architecture & interiors
+photography
+fashion & outfits
+beauty & skincare
+cooking & recipes
+restaurants & cafés
+fitness & workouts
+mobility & stretching
+nutrition & diet
+health & medicine
+mental health
+adhd & neurodiversity
+personal growth
+productivity & habits
+relationships & dating
+date ideas
+friendship
+family & parenting
+love & heartbreak
+communication & social skills
+philosophy & stoicism
+spirituality & mindfulness
+psychology
+humour & memes
+travel & places
+nature & outdoors
+animals & pets
+home & diy
+3d printing & making
+tech & gadgets
+ai
+programming
+cybersecurity & privacy
+science
+engineering
+history & culture
+society & politics
+environment & climate
+work & career
+entrepreneurship & business
+money & finance
+learning & languages
+gaming
+sports
+cars & vehicles
+things to try

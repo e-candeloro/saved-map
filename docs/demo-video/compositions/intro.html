@@ -1,0 +1,26 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: Inter, sans-serif; color: #171717; }
+    #intro-mark { position: absolute; left: 192px; top: 300px; display: grid; grid-template-columns: repeat(2, 48px); gap: 10px; }
+    #intro-mark i { display: block; width: 48px; height: 48px; border-radius: 11px; background: #737373; }
+    #intro-mark i:first-child { background: #c2410c; }
+    .intro-line { position: absolute; left: 192px; font-size: 124px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; white-space: nowrap; }
+    #intro-l1 { top: 430px; }
+    #intro-l2 { top: 580px; }
+    .accent { color: #c2410c; }
+  </style>
+  <div id="root" data-composition-id="intro" data-width="1920" data-height="1080">
+    <div id="intro-mark" class="clip" data-start="0" data-duration="3.2"><i></i><i></i><i></i><i></i></div>
+    <h1 id="intro-l1" class="intro-line clip" data-start="0" data-duration="3.2"><span>Everything you saved.</span></h1>
+    <h1 id="intro-l2" class="intro-line clip" data-start="0.4" data-duration="2.8"><span>In one place <span class="accent">you own.</span></span></h1>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // frame 0 already shows the mark and the first line (it is the GIF's thumbnail); the second line wipes in
+    tl.fromTo("#intro-l2 > span", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.55, ease: "power3.out" }, 0.45);
+    // hand-off: the type lifts away as the app window rises in behind it
+    tl.fromTo(["#intro-mark i", "#intro-l1 > span", "#intro-l2 > span"], { y: 0, opacity: 1 },
+      { y: -40, opacity: 0, duration: 0.3, ease: "power2.in", stagger: 0.04, immediateRender: false }, 2.45);
+    window.__timelines["intro"] = tl;
+  </script>
+</template>

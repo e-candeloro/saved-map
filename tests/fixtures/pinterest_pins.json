@@ -1,0 +1,84 @@
+[
+ {
+  "id": "e1_SyntheticPinIdOne",
+  "type": "pin",
+  "title": "Cozy Living Room Ideas",
+  "grid_title": "Cozy Living Room Ideas",
+  "description": "Warm, natural living room inspiration.",
+  "auto_alt_text": "a living room with a sofa and plants",
+  "seo_url": "/pin/e1_SyntheticPinIdOne/",
+  "image_signature": "0123456789abcdef0123456789abcdef",
+  "images": {
+   "orig": {
+    "url": "https://i.pinimg.com/originals/aa/bb/cc/aabbcc0000000000000000000000000a.jpg",
+    "width": 736,
+    "height": 1104
+   }
+  },
+  "videos": null,
+  "carousel_data": null,
+  "native_creator": {
+   "username": "example_creator"
+  },
+  "domain": "example.com",
+  "link": "https://example.com/living-room",
+  "created_at": "Mon, 01 Jan 2024 10:00:00 +0000"
+ },
+ {
+  "id": "e1_SyntheticPinIdTwo",
+  "type": "pin",
+  "title": "",
+  "grid_title": "",
+  "description": " ",
+  "auto_alt_text": "a bedroom with string lights",
+  "seo_url": "/pin/e1_SyntheticPinIdTwo/",
+  "image_signature": "fedcba9876543210fedcba9876543210",
+  "images": {
+   "orig": {
+    "url": "https://i.pinimg.com/originals/aa/bb/cc/aabbcc0000000000000000000000000a.jpg",
+    "width": 736,
+    "height": 1104
+   }
+  },
+  "videos": null,
+  "carousel_data": null,
+  "native_creator": null,
+  "domain": "Uploaded by user",
+  "link": null,
+  "created_at": null
+ },
+ {
+  "id": "e1_SyntheticPinIdTwo",
+  "type": "pin",
+  "title": "",
+  "grid_title": "",
+  "description": " ",
+  "auto_alt_text": "a bedroom with string lights",
+  "seo_url": "/pin/e1_SyntheticPinIdTwo/",
+  "image_signature": "videosig",
+  "images": {
+   "orig": {
+    "url": "https://i.pinimg.com/originals/aa/bb/cc/aabbcc0000000000000000000000000a.jpg",
+    "width": 736,
+    "height": 1104
+   }
+  },
+  "videos": {
+   "video_list": {
+    "V_HLSV4": {
+     "url": "https://v.pinimg.com/x.m3u8",
+     "width": 1080
+    },
+    "V_720P": {
+     "url": "https://v.pinimg.com/x_720.mp4",
+     "width": 720
+    }
+   }
+  },
+  "carousel_data": null,
+  "native_creator": null,
+  "domain": "Uploaded by user",
+  "link": null,
+  "created_at": null
+ }
+]

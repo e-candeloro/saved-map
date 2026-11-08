@@ -1,0 +1,49 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: Inter, sans-serif; color: #171717; }
+    /* the app window: real recordings only, no fake chrome */
+    #tour-win { position: absolute; left: 240px; top: 84px; width: 1440px; height: 810px; border-radius: 14px; overflow: hidden;
+                background: #fafafa; border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16); }
+    #tour-cam { position: absolute; inset: 0; transform-origin: 50% 42%; }
+    #tour-win video { position: absolute; left: 0; top: 0; width: 1440px; height: 810px; object-fit: cover; }
+    .cap { position: absolute; left: 240px; top: 924px; white-space: nowrap; }
+    .cap span { display: inline-block; }
+    .cap-t { font-size: 40px; font-weight: 700; letter-spacing: -0.01em; }
+    .cap-s { font-size: 30px; font-weight: 400; color: #525252; margin-left: 18px; }
+    .accent { color: #c2410c; }
+  </style>
+  <div id="root" data-composition-id="tour" data-width="1920" data-height="1080">
+    <div id="tour-win">
+      <div id="tour-cam" data-layout-allow-overflow>
+      <video id="tour-library" class="clip" data-start="0" data-duration="7.15" data-playback-rate="1.2" data-track-index="1" muted playsinline src="assets/library.mp4"></video>
+      <video id="tour-topic" class="clip" data-start="7.15" data-duration="8.05" data-playback-rate="1.15" data-track-index="2" muted playsinline src="assets/topic.mp4"></video>
+      <video id="tour-map" class="clip" data-start="15.2" data-duration="9.05" data-playback-rate="1.1" data-track-index="3" muted playsinline src="assets/map.mp4"></video>
+      <video id="tour-search" class="clip" data-start="24.25" data-duration="7.3" data-playback-rate="1.2" data-track-index="4" muted playsinline src="assets/search.mp4"></video>
+      </div>
+    </div>
+    <h2 id="cap1" class="cap clip" data-start="0" data-duration="7.15"><span class="cap-t">Every <span class="accent">platform</span>, one library</span><span class="cap-s">Instagram, Pinterest, YouTube and Goodreads, on your machine</span></h2>
+    <h2 id="cap2" class="cap clip" data-start="7.15" data-duration="8.05"><span class="cap-t"><span class="accent">Topics</span> across platforms</span><span class="cap-s">your books, the reels about them, related items</span></h2>
+    <h2 id="cap3" class="cap clip" data-start="15.2" data-duration="9.05"><span class="cap-t">A <span class="accent">map</span> of your taste</span><span class="cap-s">similar things sit together; zoom in, open anything</span></h2>
+    <h2 id="cap4" class="cap clip" data-start="24.25" data-duration="7.45"><span class="cap-t">Search by <span class="accent">meaning</span></span><span class="cap-s">what is said, shown or written</span></h2>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#tour-win", { y: 70, scale: 0.96, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.6, ease: "power3.out" }, 0);
+    // each caption: title wipes in, its line follows; it lands, then holds still while it is read
+    [["#cap1", 0.25], ["#cap2", 7.15], ["#cap3", 15.2], ["#cap4", 24.25]].forEach(([id, t]) => {
+      tl.fromTo(`${id} .cap-t`, { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "power3.out" }, t + 0.05);
+      tl.fromTo(`${id} .cap-s`, { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, t + 0.2);
+    });
+    // punch in on the viewer whenever it is open (times measured on the takes), so its text and the
+    // Related row read at GIF size; out again before it closes
+    tl.set("#tour-cam", { scale: 1 }, 0);  // one baseline, then plain to() tweens: seek-safe in any order
+    [[9.35, 14.0], [20.6, 24.0], [27.85, 30.4]].forEach(([a, b]) => {
+      tl.to("#tour-cam", { scale: 1.3, duration: 0.5, ease: "power2.inOut" }, a);
+      tl.to("#tour-cam", { scale: 1, duration: 0.45, ease: "power2.inOut" }, b);
+    });
+    // hand-off to the end card
+    tl.fromTo("#tour-win", { scale: 1, opacity: 1 }, { scale: 0.94, opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, 31.25);
+    tl.fromTo("#cap4", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power2.in", immediateRender: false }, 31.25);
+    window.__timelines["tour"] = tl;
+  </script>
+</template>

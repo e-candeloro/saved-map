@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="SavedMap: your saved posts, pins, videos and books in one local library.">
+<meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141415" media="(prefers-color-scheme: dark)">
+<title>SavedMap</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='6' height='6' rx='1.5' fill='%23c2410c'/%3E%3Crect x='9' y='1' width='6' height='6' rx='1.5' fill='%23737373'/%3E%3Crect x='1' y='9' width='6' height='6' rx='1.5' fill='%23737373'/%3E%3Crect x='9' y='9' width='6' height='6' rx='1.5' fill='%23737373'/%3E%3C/svg%3E">
+<link rel="preload" href="/api/data" as="fetch" crossorigin>
+<script>  /* apply the saved theme before first paint */
+try { const t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}
+</script>
+<link rel="stylesheet" href="/static/app.css">
+<style>
+/* Custom CSS only for the map canvas, its tooltip and the dialogs' backdrop */
+#map { position:absolute; inset:0; width:100%; height:100%; cursor:grab; touch-action:none; }
+#map.dragging { cursor:grabbing; }
+#tip { position:absolute; pointer-events:none; max-width:280px; z-index:5; }
+dialog::backdrop { background:rgb(0 0 0 / .55); }
+</style>
+<script src="/static/icons.js" defer></script>
+<script src="/static/app.js" defer></script>
+</head>
+<body class="h-dvh overflow-hidden bg-bg font-sans text-fg antialiased">
+<div class="grid h-full grid-rows-[auto_1fr]">
+  <header class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2 md:h-14 md:flex-nowrap md:px-4 md:py-0">
+    <a href="#" id="home" class="mr-1 text-base font-semibold tracking-tight md:mr-2">SavedMap</a>
+    <label class="relative order-3 flex min-w-0 flex-1 basis-[55%] items-center md:order-none md:max-w-md md:basis-auto">
+      <span class="pointer-events-none absolute left-3 text-fg3" data-icon="search"></span>
+      <input id="q" type="search" autocomplete="off" placeholder="Search" aria-label="Search what items show, say or are about"
+             class="h-9 w-full rounded-lg border border-line bg-raised pr-10 pl-9 text-base placeholder:text-fg3 focus:bg-surface focus:outline-none focus-visible:outline-2 focus-visible:outline-accent md:h-8 md:text-sm">
+      <span class="kbd pointer-events-none absolute right-2 max-md:hidden" aria-hidden="true">/</span>
+    </label>
+    <div class="order-4 flex rounded-lg border border-line bg-raised p-0.5 md:order-none" role="tablist" aria-label="View">
+      <button role="tab" data-tab="grid" class="tab inline-flex h-8 items-center gap-2 rounded-md px-3 text-sm text-fg2 aria-selected:bg-surface aria-selected:text-fg aria-selected:shadow-sm md:h-7" title="Grid (g)"><span data-icon="layout-grid"></span><span class="max-sm:sr-only">Grid</span></button>
+      <button role="tab" data-tab="map" class="tab inline-flex h-8 items-center gap-2 rounded-md px-3 text-sm text-fg2 aria-selected:bg-surface aria-selected:text-fg aria-selected:shadow-sm md:h-7" title="Map (m)"><span data-icon="map"></span><span class="max-sm:sr-only">Map</span></button>
+    </div>
+    <select id="mode" aria-label="Arrange the map by" class="order-5 h-9 rounded-lg border border-line bg-raised px-2 text-sm text-fg2 md:order-none md:h-8">
+      <option value="mixed">By look and topic</option><option value="visual">By look</option><option value="topic">By topic</option>
+    </select>
+    <div class="ml-auto flex items-center gap-1 md:gap-2">
+      <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings"><span data-icon="settings"></span></button>
+      <button id="themeBtn" class="icon-btn" title="Theme: Auto" aria-label="Theme: Auto (follows the system)"></button>
+      <button id="surprise" class="btn max-sm:w-9 max-sm:justify-center max-sm:px-0" title="Open a random item from the current view"><span data-icon="shuffle"></span><span class="max-sm:sr-only">Surprise me</span></button>
+      <div class="relative">
+        <button id="updateBtn" class="btn" aria-haspopup="dialog" aria-expanded="false"><span data-icon="refresh-cw" id="updateIcon"></span><span id="updateLabel" class="max-sm:sr-only">Update</span></button>
+        <div id="updatePanel" class="absolute top-11 right-0 z-30 hidden w-[min(24rem,calc(100vw-1.5rem))] rounded-xl border border-line bg-surface p-4 shadow-[0_8px_24px_rgb(0_0_0/0.12)] md:top-10" role="dialog" aria-label="Update"></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid min-h-0 grid-cols-1 md:grid-cols-[264px_1fr]">
+    <div id="scrim" class="fixed inset-0 z-30 hidden bg-black/40 md:hidden" aria-hidden="true"></div>
+    <aside id="sidebar" class="min-h-0 overflow-y-auto border-r border-line bg-surface px-2 pb-6 max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:hidden max-md:w-[min(20rem,85vw)] max-md:shadow-xl max-md:data-[open]:block" aria-label="Filters">
+      <div class="sticky top-0 z-10 -mx-2 flex items-center border-b border-line bg-surface px-4 py-3 md:hidden">
+        <span class="text-sm font-medium">Filters</span>
+        <button id="sideDone" class="btn ml-auto">Done</button>
+      </div>
+      <nav id="side"></nav>
+    </aside>
+    <main class="flex min-h-0 flex-col">
+      <div class="flex min-h-12 flex-wrap items-center gap-2 px-3 py-2 md:px-4">
+        <button id="filtersBtn" class="btn md:hidden" aria-controls="sidebar"><span data-icon="sliders-horizontal"></span>Filters</button>
+        <span id="status" class="text-sm text-fg2" aria-live="polite"></span>
+        <div id="chips" class="flex flex-wrap items-center gap-2"></div>
+        <button id="resetFilters" class="btn ml-auto max-sm:w-9 max-sm:justify-center max-sm:px-0" data-clear="all" disabled title="Clear search and all filters"><span data-icon="funnel-x"></span><span class="max-sm:sr-only">Reset filters</span></button>
+      </div>
+      <section id="view" class="relative min-h-0 flex-1 overflow-y-auto">
+        <div id="grid" class="grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-1.5 px-3 pb-4 sm:gap-2 md:grid-cols-[repeat(auto-fill,minmax(148px,1fr))] md:px-4"></div>
+        <div id="more" class="h-px" aria-hidden="true"></div>
+        <div id="empty" class="hidden px-4 py-16 text-center text-sm text-fg2"></div>
+        <canvas id="map" class="hidden" aria-label="Map of saved items, similar ones close together. Click a thumbnail to open it."></canvas>
+        <div id="mapNote" class="pointer-events-none absolute bottom-3 left-4 hidden font-mono text-xs text-fg3"></div>
+        <div id="mapCtl" class="absolute right-3 bottom-3 hidden flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.08)] md:right-4 md:bottom-4" role="group" aria-label="Map zoom">
+          <button class="icon-btn rounded-none" data-zoom="in" title="Zoom in (+)" aria-label="Zoom in"><span data-icon="plus"></span></button>
+          <button class="icon-btn rounded-none border-t border-line" data-zoom="out" title="Zoom out (−)" aria-label="Zoom out"><span data-icon="minus"></span></button>
+          <button class="icon-btn rounded-none border-t border-line" data-zoom="reset" title="Reset view (0)" aria-label="Reset view"><span data-icon="scan"></span></button>
+        </div>
+        <div id="tip" class="hidden rounded-lg border border-line bg-surface px-3 py-2 text-xs shadow-sm"><div id="tipTitle" class="font-medium text-fg"></div><div id="tipText" class="mt-1 text-fg2"></div></div>
+      </section>
+    </main>
+  </div>
+</div>
+<dialog id="settingsDlg" class="m-auto max-h-[90vh] w-[min(760px,94vw)] overflow-hidden rounded-2xl border border-line bg-surface p-0 text-fg max-md:h-dvh max-md:max-h-none max-md:w-screen max-md:max-w-none max-md:rounded-none max-md:border-0"></dialog>
+<div id="toast" role="status" aria-live="polite" class="pointer-events-none fixed bottom-4 left-1/2 z-50 hidden -translate-x-1/2 rounded-lg bg-fg px-3 py-2 text-sm text-bg shadow-lg"></div>
+<dialog id="dlg" class="m-auto max-h-[92vh] w-[min(1080px,94vw)] overflow-hidden rounded-2xl border border-line bg-surface p-0 text-fg max-md:h-dvh max-md:max-h-none max-md:w-screen max-md:max-w-none max-md:rounded-none max-md:border-0"></dialog>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "code": "DAbc_123",
+  "pk": "1",
+  "media_type": 2,
+  "taken_at": 1700000000,
+  "like_count": 42,
+  "user": {"username": "someone"},
+  "caption": {"text": "A caption"},
+  "saved_collection_ids": ["111", "222"],
+  "video_versions": [
+    {"url": "https://cdn/v_lo.mp4", "height": 640, "bandwidth": 1},
+    {"url": "https://cdn/v_hi.mp4", "height": 1280, "bandwidth": 2}
+  ],
+  "image_versions2": {"candidates": [
+    {"url": "https://cdn/i_small.jpg", "width": 320},
+    {"url": "https://cdn/i_big.jpg", "width": 1080}
+  ]}
+}

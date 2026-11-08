@@ -1,0 +1,30 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; font-family: Inter, sans-serif; color: #171717; }
+    #outro-lockup { position: absolute; left: 192px; top: 330px; display: flex; align-items: center; gap: 36px; }
+    #outro-mark { display: grid; grid-template-columns: repeat(2, 56px); gap: 12px; }
+    #outro-mark i { display: block; width: 56px; height: 56px; border-radius: 13px; background: #737373; }
+    #outro-mark i:first-child { background: #c2410c; }
+    #outro-word { font-size: 132px; font-weight: 700; letter-spacing: -0.035em; line-height: 1; }
+    #outro-line { position: absolute; left: 192px; top: 540px; font-size: 40px; color: #525252; white-space: nowrap; }
+    #outro-cmd { position: absolute; left: 192px; top: 640px; padding: 20px 28px; border-radius: 12px; background: #fafafa;
+                 border: 1px solid rgba(0, 0, 0, 0.08); font-family: "JetBrains Mono", monospace; font-size: 34px; white-space: nowrap; }
+    #outro-cmd b { color: #c2410c; font-weight: 400; }
+  </style>
+  <div id="root" data-composition-id="outro" data-width="1920" data-height="1080">
+    <div id="outro-lockup" class="clip" data-start="0" data-duration="3.3">
+      <div id="outro-mark"><i></i><i></i><i></i><i></i></div>
+      <div id="outro-word"><span>SavedMap</span></div>
+    </div>
+    <p id="outro-line" class="clip" data-start="0.5" data-duration="2.8"><span>Runs 100% on your machine · open source · MIT</span></p>
+    <div id="outro-cmd" class="clip" data-start="0.9" data-duration="2.4"><span><b>$</b> uv run savedmap serve</span></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#outro-mark i", { scale: 0.2, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(1.7)", stagger: 0.07 }, 0);
+    tl.fromTo("#outro-word span", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.55, ease: "power3.out" }, 0.15);
+    tl.fromTo("#outro-line span", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.5, ease: "power3.out" }, 0.5);
+    tl.fromTo("#outro-cmd span", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.7, ease: "steps(23)" }, 0.95);
+    window.__timelines["outro"] = tl;
+  </script>
+</template>

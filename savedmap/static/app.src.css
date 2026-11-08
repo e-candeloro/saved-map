@@ -1,0 +1,46 @@
+/* Source of static/app.css. After changing classes in index.html/app.js or the tokens here, run
+   scripts/build_ui.sh (Tailwind CLI, no install needed: npx). The app itself has no build step. */
+@import "tailwindcss" source(none);
+@source "./index.html";
+@source "./app.js";
+
+/* Design tokens: graphite neutrals, one ember accent, 4px grid. Colour lives in the content. */
+:root {
+  --bg: #fafafa; --surface: #ffffff; --raised: #f4f4f5; --line: rgb(23 23 23 / 0.08);
+  --fg: #171717; --fg2: #525252; --fg3: #737373; --accent: #c2410c; --on-accent: #ffffff; --accent-soft: #fdf1ea;
+}
+/* dark: follows the system in Auto, or forced with the theme switch (data-theme on <html>) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme=light]) {
+    --bg: #141415; --surface: #19191b; --raised: #232325; --line: rgb(237 237 237 / 0.08);
+    --fg: #ededed; --fg2: #a1a1a6; --fg3: #85858b; --accent: #fb923c; --on-accent: #1a1a1a; --accent-soft: #2a1c12;
+    color-scheme: dark;
+  }
+}
+:root[data-theme=dark] {
+  --bg: #141415; --surface: #19191b; --raised: #232325; --line: rgb(237 237 237 / 0.08);
+  --fg: #ededed; --fg2: #a1a1a6; --fg3: #85858b; --accent: #fb923c; --on-accent: #1a1a1a; --accent-soft: #2a1c12;
+  color-scheme: dark;
+}
+@theme inline {
+  --color-bg: var(--bg); --color-surface: var(--surface); --color-raised: var(--raised); --color-line: var(--line);
+  --color-fg: var(--fg); --color-fg2: var(--fg2); --color-fg3: var(--fg3);
+  --color-accent: var(--accent); --color-on-accent: var(--on-accent); --color-accent-soft: var(--accent-soft);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+@layer components {
+  .btn { @apply inline-flex h-8 items-center gap-2 rounded-lg border border-line bg-raised px-3 text-sm text-fg transition-colors duration-150 ease-out hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50 max-md:h-9; }
+  .btn-primary { @apply inline-flex h-8 items-center gap-2 rounded-lg bg-accent px-3 text-sm font-medium text-on-accent transition-opacity duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 max-md:h-9; }
+  .icon-btn { @apply inline-flex size-8 items-center justify-center rounded-lg text-fg2 transition-colors duration-150 hover:bg-raised hover:text-fg max-md:size-9; }
+  .row { @apply flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-sm text-fg2 transition-colors duration-150 hover:bg-raised hover:text-fg max-md:h-10; }
+  .row[aria-pressed=true] { @apply bg-accent-soft text-fg; }
+  .row[aria-pressed=true] .n { @apply text-fg2; }  /* fg3 on accent-soft is under 4.5:1 */
+  .row .n { @apply ml-auto font-mono text-xs text-fg3 tabular-nums; }
+  .section-label { @apply mt-6 mb-2 px-2 text-xs font-medium text-fg3; }
+  .chip { @apply inline-flex h-6 items-center gap-1 rounded-md border border-line bg-raised px-2 text-xs text-fg2 max-md:h-8; }
+  button.chip { @apply transition-colors duration-150 hover:text-fg; }
+  .kbd { @apply rounded border border-line bg-raised px-1 font-mono text-xs text-fg3; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-accent; }
+}
