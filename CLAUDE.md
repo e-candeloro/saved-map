@@ -14,7 +14,7 @@ Local library of a person's saves from Instagram, Pinterest, YouTube and Goodrea
 | `savedmap/web.py`, `static/` | FastAPI app and the one-page UI (`app.js`, `index.html`, prebuilt `app.css` + `icons.js`) |
 | `savedmap/config.py` | pydantic models for `data/config.toml`; the Settings menu writes it with tomlkit |
 | `.claude/skills/` | `savedmap-setup`, `connect-<platform>`, `add-source` (ours); `unslop` (third party, CC BY 4.0) |
-| `Dockerfile`, `compose.yaml` | CPU image of the web app; `SAVEDMAP_READ_ONLY=1` turns off Update and Settings (a copy synced by another machine) |
+| `Dockerfile`, `compose.yaml`, `compose.gpu.yaml` | image of the web app, CPU by default (build arg `TORCH`; the GPU override sets `cu128` and reserves the NVIDIA GPU); `SAVEDMAP_READ_ONLY=1` turns off Update and Settings (a copy synced by another machine) |
 | `docs/demo-video/` | HyperFrames source and recorder for the README demo |
 | `data/` | the user's library (gitignored, often a symlink). Never commit anything from it |
 
@@ -26,6 +26,7 @@ uv run pytest -q             # tests: no network, temp data folder
 uv run savedmap serve        # http://127.0.0.1:8770
 uv run savedmap status       # items per platform, when the next sync is allowed
 docker compose up -d         # read-only CPU copy of ./data on :8770
+docker compose -f compose.yaml -f compose.gpu.yaml up -d --build   # same, on an NVIDIA GPU
 scripts/build_ui.sh          # after changing classes/icons in savedmap/static (rebuilds app.css + icons.js)
 ```
 

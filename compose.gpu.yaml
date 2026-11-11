@@ -1,0 +1,16 @@
+# NVIDIA GPU for search and related items. Needs the NVIDIA Container Toolkit.
+#   docker compose -f compose.yaml -f compose.gpu.yaml up -d --build
+# or make it the default with COMPOSE_FILE=compose.yaml:compose.gpu.yaml in .env
+services:
+  savedmap:
+    build:
+      args:
+        TORCH: cu128             # the CUDA build in uv.lock
+    image: savedmap:0.2.1-cuda
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

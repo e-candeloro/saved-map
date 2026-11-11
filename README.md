@@ -82,6 +82,14 @@ Syncing needs your logged-in browser and processing wants a GPU, so both stay on
 docker compose up -d                      # builds the CPU image, serves ./data on http://127.0.0.1:8770
 ```
 
+With an NVIDIA GPU and the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html), add `compose.gpu.yaml`. It builds the CUDA image, and search runs its models on the GPU (about 3.5 GB of GPU memory):
+
+```bash
+docker compose -f compose.yaml -f compose.gpu.yaml up -d --build
+```
+
+To make it the default, put `COMPOSE_FILE=compose.yaml:compose.gpu.yaml` in a `.env` file next to `compose.yaml`.
+
 To keep a server copy current, put an executable script at `data/hooks/after-update`. `savedmap update` runs it after every successful update, from the CLI or the Update button. A typical hook copies `savedmap.db` (with `sqlite3 .backup`), `layout.json`, `config.toml`, `thumbs/` and `media/` to the server with rsync, then restarts the container. The hook lives in your data folder, so it stays out of git and the web app can't change it.
 
 ## Privacy and accounts
@@ -108,7 +116,7 @@ To keep a server copy current, put an executable script at `data/hooks/after-upd
 | Topic | multilingual-e5 | text embedding; topics from an editable list |
 | Map | UMAP + HDBSCAN | three views; labels are each cluster's most distinctive tags |
 
-Models load one at a time to fit a 4 GB GPU, and search runs on the CPU. Scope, user journeys, architecture and costs are in [docs/DESIGN.md](docs/DESIGN.md).
+Models load one at a time to fit a 4 GB GPU, and search runs on the CPU (on the GPU in a read-only Docker copy that has one). Scope, user journeys, architecture and costs are in [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Commands
 

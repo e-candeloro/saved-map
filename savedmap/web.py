@@ -100,8 +100,11 @@ def item(item_id: str):
 
 @lru_cache(maxsize=1)
 def encoders():
-    from .process import Siglip, load_e5
-    return Siglip("cpu"), load_e5("cpu")  # one query at a time: CPU is fast enough and leaves the GPU free
+    from .process import DEVICE, Siglip, load_e5
+    # One query at a time: CPU is fast enough and leaves the GPU to processing.
+    # A read-only copy never processes, so it uses the GPU if it has one.
+    device = DEVICE if READ_ONLY else "cpu"
+    return Siglip(device), load_e5(device)
 
 
 _emb: dict = {"key": None}
