@@ -2,7 +2,7 @@
 
 SavedMap is a local library of everything you saved on social platforms. It covers Instagram saved posts, Pinterest pins, YouTube playlists and Goodreads books. You can browse it by collection, on a map that groups similar items, and with search by what an item shows, says or is about. Everything is downloaded and runs on your own machine. The goal is to give people their saved content back, not to make money.
 
-Status: v0.2 prototype. Docker comes later.
+Status: v0.2 prototype. A read-only Docker copy serves the library to other devices; syncing and processing stay on your computer.
 
 ## Jobs to be done
 
@@ -19,7 +19,7 @@ Status: v0.2 prototype. Docker comes later.
 - scheduled syncs
 - multi-user, auth or hosting
 - mobile app
-- Docker
+- syncing or processing inside Docker (the container is a read-only viewer)
 - more than three sources
 - cloud embeddings or OCR
 
@@ -197,4 +197,4 @@ Updating means exporting again (Takeout can also schedule an export every 2 mont
 
 ## Later
 
-Docker Compose, Karakeep and other sources, a list view with sorting, curation if real use asks for it.
+Karakeep and other sources, a list view with sorting, curation if real use asks for it.

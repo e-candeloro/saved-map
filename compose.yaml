@@ -1,0 +1,17 @@
+# SavedMap in Docker (CPU): `docker compose up -d`, then http://127.0.0.1:8770
+# ./data is the folder `savedmap update` fills on your computer (it can be a symlink); see README → Docker.
+services:
+  savedmap:
+    build: .
+    image: savedmap:0.2.1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8770:8770"
+    volumes:
+      - ./data:/data
+      - models:/cache          # search models, downloaded on first start (~1.5 GB)
+    environment:
+      SAVEDMAP_READ_ONLY: "1"  # browse and search only; set "0" to allow Update and Settings in the container
+
+volumes:
+  models:

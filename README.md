@@ -74,6 +74,16 @@ uv run savedmap serve                     # http://127.0.0.1:8770
 
 The first run on a big library is an overnight job. On a GTX 1650 Ti, ~2,800 Instagram posts with ~29 h of audio took about 7 h. After that, updates take minutes.
 
+## Docker (home server)
+
+Syncing needs your logged-in browser and processing wants a GPU, so both stay on your computer. A server can run a read-only copy for every device on your network: browse, map, search and related items, on the CPU (about 2 GB of RAM).
+
+```bash
+docker compose up -d                      # builds the CPU image, serves ./data on http://127.0.0.1:8770
+```
+
+To keep a server copy current, put an executable script at `data/hooks/after-update`. `savedmap update` runs it after every successful update, from the CLI or the Update button. A typical hook copies `savedmap.db` (with `sqlite3 .backup`), `layout.json`, `config.toml`, `thumbs/` and `media/` to the server with rsync, then restarts the container. The hook lives in your data folder, so it stays out of git and the web app can't change it.
+
 ## Privacy and accounts
 
 - **Local by default.** Media, database, models and the LLM ([Ollama](https://ollama.com), `qwen3:1.7b`) all run on your machine.
@@ -114,7 +124,6 @@ Tests: `uv run pytest` covers storage, the ban guard, migration, settings and co
 
 ## Roadmap
 
-- Docker Compose for an always-on home server
 - [Karakeep](https://karakeep.app) and more sources
 - A list view and sorting
 

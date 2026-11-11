@@ -513,7 +513,8 @@ function ago(ts) {
 async function refreshUpdate(open) {
   const u = await (await fetch("/api/update")).json();
   const p = $("#updatePanel");
-  $("#updateLabel").textContent = u.running ? "Updating" : "Update";
+  $("#settingsBtn").hidden = u.read_only;
+  $("#updateLabel").textContent = u.read_only ? "Synced" : u.running ? "Updating" : "Update";
   $("#updateIcon").firstChild?.classList.toggle("animate-spin", u.running);
   const rows = u.sources.map(s => `<li class="flex items-start gap-3 py-2">
       <span class="mt-0.5 text-fg3">${icon(PLATFORMS[s.source]?.icon || "circle")}</span>
@@ -521,12 +522,13 @@ async function refreshUpdate(open) {
       <div class="text-xs text-fg2">${s.last ? "Last sync " + ago(s.last) : "Never synced"}${s.allowed ? "" : `. ${esc(s.reason)}`}</div></div></li>`).join("");
   const log = u.log.length && (u.running || u.exit !== null) ? `<pre class="mt-3 max-h-40 overflow-auto rounded-lg bg-raised p-2 font-mono text-[11px] leading-4 whitespace-pre-wrap text-fg2">${esc(u.log.join("\n"))}</pre>` : "";
   const result = !u.running && u.exit !== null ? `<p class="mt-2 text-xs ${u.exit === 0 ? "text-fg2" : "text-[#dc2626]"}">${u.exit === 0 ? "Finished. New items are in." : "The update stopped with an error; the log above says why."}</p>` : "";
-  p.innerHTML = `<h3 class="text-sm font-medium">Update your library</h3>
-    <p class="mt-1 text-xs text-fg2">Fetches only new saves, then downloads and processes them. Platforms with a login are limited to protect your account.</p>
+  p.innerHTML = `<h3 class="text-sm font-medium">${u.read_only ? "Read-only copy" : "Update your library"}</h3>
+    <p class="mt-1 text-xs text-fg2">${u.read_only ? "Kept up to date by the machine that syncs your platforms. New saves show up after its next update."
+      : "Fetches only new saves, then downloads and processes them. Platforms with a login are limited to protect your account."}</p>
     ${u.sources.length ? `<ul class="mt-2 divide-y divide-line">${rows}</ul>` : `<p class="mt-3 text-sm text-fg2">No platform enabled yet: edit <code class="font-mono">data/config.toml</code>.</p>`}
     ${log}${result}
     <div class="mt-3 flex justify-end gap-2"><button class="btn" data-panel-close>Close</button>
-    <button class="btn-primary" id="startUpdate" ${u.running || !u.sources.length ? "disabled" : ""}>${u.running ? "Running…" : "Update now"}</button></div>`;
+    ${u.read_only ? "" : `<button class="btn-primary" id="startUpdate" ${u.running || !u.sources.length ? "disabled" : ""}>${u.running ? "Running…" : "Update now"}</button>`}</div>`;
   if (open) p.classList.remove("hidden");
   if (u.running && !polling) polling = setInterval(() => refreshUpdate(false), 2000);
   if (!u.running && polling) { clearInterval(polling); polling = null; await load(); renderSide(); render(); }

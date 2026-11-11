@@ -1,0 +1,9 @@
+.git
+.venv
+.claude
+data
+browser-profile
+docs
+tests
+scripts
+**/__pycache__

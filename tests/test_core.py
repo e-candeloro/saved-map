@@ -137,3 +137,25 @@ def test_related_and_item_api(con):
     det = client.get("/api/item/instagram:p1").json()
     assert det["summary"] == "summary 1" and det["tags"] == ["a"] and det["text"] == "post 1"
     assert client.get("/api/item/nope:x").status_code == 404
+
+
+def test_read_only_copy(con, monkeypatch):
+    from fastapi.testclient import TestClient
+    from savedmap import web
+    monkeypatch.setattr(web, "READ_ONLY", True)
+    client = TestClient(web.app)
+    assert client.get("/api/update").json()["read_only"] is True
+    assert client.post("/api/update").status_code == 403
+    assert client.get("/api/settings").status_code == 403
+    assert client.put("/api/settings", json={"config": {}, "topics": []}).status_code == 403
+
+
+def test_after_update_hook(con, monkeypatch, tmp_path):
+    hook = tmp_path / "hooks" / "after-update"
+    monkeypatch.setattr(update, "HOOK", hook)
+    update.after_update()  # no hook: nothing happens
+    hook.parent.mkdir()
+    hook.write_text(f"#!/bin/sh\necho ran > {tmp_path / 'out'}\n")
+    hook.chmod(0o755)
+    update.after_update()
+    assert (tmp_path / "out").read_text() == "ran\n"

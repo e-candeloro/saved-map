@@ -1,5 +1,6 @@
 """Local web app: grid, semantic map, search and the Update button. Serves media straight from the data folder."""
 import json
+import os
 import subprocess
 import sys
 import threading
@@ -21,6 +22,13 @@ UPDATE_LOG = db.DATA_DIR / "update.log"
 app = FastAPI(title="SavedMap")
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 job: dict = {"proc": None}  # the one running `savedmap update`, if any
+# A copy that another machine keeps up to date (e.g. a server): browse and search only, no updates or settings
+READ_ONLY = os.environ.get("SAVEDMAP_READ_ONLY") == "1"
+
+
+def writable():
+    if READ_ONLY:
+        raise HTTPException(403, "This copy is read-only: updates and settings live on the machine that syncs it")
 
 
 @app.get("/")
@@ -146,6 +154,7 @@ def related(item_id: str, k: int = 8):
 
 @app.get("/api/settings")
 def get_settings():
+    writable()
     from .process import USER_TOPICS, topic_list
     return {"config": config.load().model_dump(), "schema": config.Config.model_json_schema(),
             "topics": topic_list(), "custom_topics": USER_TOPICS.exists(), "path": str(config.PATH)}
@@ -159,6 +168,7 @@ class SettingsIn(BaseModel):
 @app.put("/api/settings")
 def put_settings(body: SettingsIn):
     """Validate everything first, then write config.toml (comments kept) and the topic list."""
+    writable()
     from .process import USER_TOPICS, topic_list
     try:
         cfg = config.Config.model_validate(body.config)
@@ -181,12 +191,13 @@ def running() -> bool:
 @app.get("/api/update")
 def update_status():
     lines = UPDATE_LOG.read_text(errors="replace").replace("\r", "\n").splitlines() if UPDATE_LOG.exists() else []
-    return {"running": running(), "exit": None if running() or job["proc"] is None else job["proc"].returncode,
+    return {"read_only": READ_ONLY, "running": running(), "exit": None if running() or job["proc"] is None else job["proc"].returncode,
             "log": [l for l in lines if l.strip()][-12:], "sources": update.status(db.connect(), config.load())}
 
 
 @app.post("/api/update")
 def start_update():
+    writable()
     if running():
         raise HTTPException(409, "An update is already running")
     log = UPDATE_LOG.open("w")

@@ -7,13 +7,14 @@ Local library of a person's saves from Instagram, Pinterest, YouTube and Goodrea
 | Path | What |
 | --- | --- |
 | `savedmap/sources/` | one connector per platform, all on the contract in `base.py` (`Item`, `Batch`, `Blocked`, `NeedsLogin`) |
-| `savedmap/update.py` | `savedmap update`: guard → fetch → store → download → process → refine → cluster |
+| `savedmap/update.py` | `savedmap update`: guard → fetch → store → download → process → refine → cluster → `data/hooks/after-update` if present |
 | `savedmap/process.py` | thumbs, frames, speech, OCR, visual, text, topics (each stage only does what is missing) |
 | `savedmap/refine.py`, `llm.py` | LLM title/summary/tags through one OpenAI-compatible client (Ollama by default), pydantic output |
 | `savedmap/cluster.py` | UMAP + HDBSCAN maps and labels → `data/layout.json` |
 | `savedmap/web.py`, `static/` | FastAPI app and the one-page UI (`app.js`, `index.html`, prebuilt `app.css` + `icons.js`) |
 | `savedmap/config.py` | pydantic models for `data/config.toml`; the Settings menu writes it with tomlkit |
 | `.claude/skills/` | `savedmap-setup`, `connect-<platform>`, `add-source` (ours); `unslop` (third party, CC BY 4.0) |
+| `Dockerfile`, `compose.yaml` | CPU image of the web app; `SAVEDMAP_READ_ONLY=1` turns off Update and Settings (a copy synced by another machine) |
 | `docs/demo-video/` | HyperFrames source and recorder for the README demo |
 | `data/` | the user's library (gitignored, often a symlink). Never commit anything from it |
 
@@ -24,6 +25,7 @@ uv sync                      # deps
 uv run pytest -q             # tests: no network, temp data folder
 uv run savedmap serve        # http://127.0.0.1:8770
 uv run savedmap status       # items per platform, when the next sync is allowed
+docker compose up -d         # read-only CPU copy of ./data on :8770
 scripts/build_ui.sh          # after changing classes/icons in savedmap/static (rebuilds app.css + icons.js)
 ```
 

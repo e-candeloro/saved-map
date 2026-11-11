@@ -1,6 +1,8 @@
 """`savedmap update`: fetch only what's new from every enabled platform, store it, download,
 process, refine and re-cluster. The ban guard lives here, once, for every source that needs a login."""
 import json
+import os
+import subprocess
 import time
 from datetime import datetime
 
@@ -160,3 +162,19 @@ def run(only: list[str] | None = None, full: bool = False, dry_run: bool = False
         refine.run()
         cluster.run(only_if_changed=True)
     print("Update finished.")
+    after_update()
+
+
+HOOK = db.DATA_DIR / "hooks" / "after-update"
+
+
+def after_update():
+    """Run <data folder>/hooks/after-update if it exists and is executable, like a git hook: e.g. copy the
+    library to a server. It lives in the data folder, so the web app can't change it. Its failure is reported,
+    not fatal: the update itself went fine."""
+    if not os.access(HOOK, os.X_OK):
+        return
+    print(f"Running {HOOK}")
+    code = subprocess.run([str(HOOK)], cwd=db.DATA_DIR).returncode
+    if code:
+        print(f"Warning: {HOOK.name} exited with {code}")
