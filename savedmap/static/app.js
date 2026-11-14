@@ -187,6 +187,7 @@ function render() {
   $("#mapNote").classList.toggle("hidden", S.tab !== "map");
   $("#mapCtl").classList.toggle("hidden", S.tab !== "map");
   $("#mapCtl").classList.toggle("flex", S.tab === "map");
+  $("#spacing").classList.toggle("hidden", S.tab !== "map");
   if (S.tab === "grid") {
     $("#grid").innerHTML = list.slice(0, 120).map((p, n) => tile(p, n)).join("");
     pending = list.slice(120);  // the rest renders as you scroll (keeps the DOM small)
@@ -257,10 +258,73 @@ function pumpThumbs() {
       .finally(() => { thumbsLoading--; pumpThumbs(); });
   }
 }
-function screen(pt, v = V) {
-  const w = cv.width - 2 * PAD, h = cv.height - 2 * PAD;
-  return [PAD + pt[0] * w * v.k + v.x, PAD + pt[1] * h * v.k + v.y];
+function screen(q, v = V) {  // q: a position from positions(), in canvas pixels at zoom 1
+  return [PAD + q[0] * v.k + v.x, PAD + q[1] * v.k + v.y];
 }
+
+// The layout is turned to match the window (landscape or portrait) and scaled evenly, stretched at most
+// STRETCH to fill it. Spacing pushes apart items closer than a share of the average gap, then fits the
+// map back in: dense clusters open up, empty space between clusters shrinks, and it never sprawls.
+const STRETCH = 1.3, SPACING = { off: 0, low: 0.35, medium: 0.6, high: 0.85 };
+let spacing = "medium";
+try { const v = localStorage.getItem("spacing"); if (v in SPACING) spacing = v; } catch {}
+let spread = {}, placed = {};
+function positions() {
+  const L = S.layout[S.mode], w = cv.width - 2 * PAD, h = cv.height - 2 * PAD;
+  const a = L.aspect || w / h, swap = !!L.aspect && (a > 1) !== (w > h), A = swap ? 1 / a : a;  // older layouts: fill
+  const u = Math.min(w / A, h), bw = Math.min(w, u * A * STRETCH), bh = Math.min(h, u * STRETCH), R = Math.sqrt(bw / bh);
+  const key = [S.mode, swap, R.toFixed(2), spacing].join("|");
+  if (spread.L !== L || spread.key !== key) {  // in a box of area 1 with the drawn map's shape
+    const ids = Object.keys(L.points), xs = new Float64Array(ids.length), ys = new Float64Array(ids.length);
+    ids.forEach((id, i) => { const p = L.points[id]; xs[i] = (swap ? p[1] : p[0]) * R; ys[i] = (swap ? p[0] : p[1]) / R; });
+    if (SPACING[spacing] && ids.length > 1) { relax(xs, ys, SPACING[spacing] / Math.sqrt(ids.length)); refit(xs, ys, R, 1 / R); }
+    spread = { L, key, ids, xs, ys };
+  }
+  const k2 = [key, w, h].join("|");
+  if (placed.spread !== spread || placed.key !== k2) {
+    const ox = (w - bw) / 2, oy = (h - bh) / 2, { ids, xs, ys } = spread, pos = {};
+    ids.forEach((id, i) => { pos[id] = [ox + xs[i] / R * bw, oy + ys[i] * R * bh]; });
+    placed = { spread, key: k2, pos };
+  }
+  return placed.pos;
+}
+function relax(xs, ys, d, rounds = 40) {  // move apart pairs closer than d (spatial hash of d-sized cells)
+  const n = xs.length, inv = 1 / d, d2 = d * d;
+  for (let r = 0; r < rounds; r++) {
+    const grid = new Map();
+    for (let i = 0; i < n; i++) {
+      const k = Math.floor(xs[i] * inv) * 100003 + Math.floor(ys[i] * inv);
+      (grid.get(k) || grid.set(k, []).get(k)).push(i);
+    }
+    let moved = 0;
+    for (let i = 0; i < n; i++) {
+      const cx = Math.floor(xs[i] * inv), cy = Math.floor(ys[i] * inv);
+      for (let gx = cx - 1; gx <= cx + 1; gx++) for (let gy = cy - 1; gy <= cy + 1; gy++) {
+        for (const j of grid.get(gx * 100003 + gy) || []) {
+          if (j <= i) continue;
+          let dx = xs[j] - xs[i], dy = ys[j] - ys[i], dd = dx * dx + dy * dy;
+          if (dd >= d2) continue;
+          if (dd < 1e-14) { dx = Math.cos(i + j) * 1e-6; dy = Math.sin(i + j) * 1e-6; dd = 1e-12; }  // stacked: split them
+          const dist = Math.sqrt(dd), f = (d - dist) / dist / 2;
+          xs[i] -= dx * f; ys[i] -= dy * f; xs[j] += dx * f; ys[j] += dy * f; moved++;
+        }
+      }
+    }
+    if (!moved) break;
+  }
+}
+function refit(xs, ys, bw, bh) {  // scale evenly back into the bw x bh box, centred
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (let i = 0; i < xs.length; i++) { x0 = Math.min(x0, xs[i]); x1 = Math.max(x1, xs[i]); y0 = Math.min(y0, ys[i]); y1 = Math.max(y1, ys[i]); }
+  const s = Math.min(bw / (x1 - x0 || 1), bh / (y1 - y0 || 1)), ox = (bw - (x1 - x0) * s) / 2, oy = (bh - (y1 - y0) * s) / 2;
+  for (let i = 0; i < xs.length; i++) { xs[i] = ox + (xs[i] - x0) * s; ys[i] = oy + (ys[i] - y0) * s; }
+}
+$("#spacing").value = spacing;
+$("#spacing").addEventListener("change", e => {
+  spacing = e.target.value;
+  try { localStorage.setItem("spacing", spacing); } catch {}
+  invalidate();
+});
 const tileSize = (r, k = V.k) => Math.min(90, 34 * Math.sqrt(k)) * r;
 
 function renderLayer() {
@@ -268,12 +332,12 @@ function renderLayer() {
   if (layer.width !== W + 2 * mx || layer.height !== H + 2 * my) { layer.width = W + 2 * mx; layer.height = H + 2 * my; }
   else lctx.clearRect(0, 0, layer.width, layer.height);
   LV = { ...V, mx, my };
-  const L = S.layout[S.mode], { show, entries } = mapView(), size = tileSize(r), half = size / 2;
+  const L = S.layout[S.mode], P = positions(), { show, entries } = mapView(), size = tileSize(r), half = size / 2;
   // Zoomed out, most tiles sit under others. Walk top-down and keep one tile per small grid cell:
   // the hidden ones are never drawn, so dense views cost about the same as sparse ones.
   const cell = size * 0.4, taken = new Set(), todo = [];
   for (let i = entries.length - 1; i >= 0; i--) {
-    const [id, pt] = entries[i], [sx, sy] = screen(pt), x = sx + mx, y = sy + my;
+    const [id, pt] = entries[i], [sx, sy] = screen(P[id]), x = sx + mx, y = sy + my;
     if (x < -size || y < -size || x > layer.width + size || y > layer.height + size) continue;
     const key = Math.floor(x / cell) * 65536 + Math.floor(y / cell);
     if (taken.has(key)) continue;
@@ -291,7 +355,7 @@ function renderLayer() {
   lctx.globalAlpha = 1;
   // cluster labels at centroids, biggest clusters first, skipping ones that would overlap
   const cent = {};
-  for (const [id, [x, y, c]] of entries) if (c >= 0 && show.has(id)) { (cent[c] ||= [0, 0, 0]); cent[c][0] += x; cent[c][1] += y; cent[c][2]++; }
+  for (const [id, [, , c]] of entries) if (c >= 0 && show.has(id)) { const [x, y] = P[id]; (cent[c] ||= [0, 0, 0]); cent[c][0] += x; cent[c][1] += y; cent[c][2]++; }
   lctx.font = `500 ${12 * r}px system-ui, sans-serif`; lctx.textAlign = "left"; lctx.textBaseline = "middle";
   const placed = [];
   for (const [c, [sx, sy, n]] of Object.entries(cent).sort((a, b) => b[1][2] - a[1][2])) {
@@ -323,10 +387,10 @@ function drawMap() {
 function hit(ev) {
   if (!S.layout[S.mode]) return null;
   const r = devicePixelRatio || 1, b = cv.getBoundingClientRect(), mx = (ev.clientX - b.left) * r, my = (ev.clientY - b.top) * r;
-  const half = tileSize(r) / 2, { entries } = mapView();
+  const half = tileSize(r) / 2, P = positions(), { entries } = mapView();
   let best = null;
-  for (const [id, pt] of entries) {  // drawn last = on top
-    const [x, y] = screen(pt);
+  for (const [id] of entries) {  // drawn last = on top
+    const [x, y] = screen(P[id]);
     if (Math.abs(mx - x) < half && Math.abs(my - y) < half) best = id;
   }
   return best;
@@ -423,12 +487,12 @@ async function openItem(id) {
     if (p.kind === "video") {  // YouTube: embedded player (needs internet); the stored thumbnail is the fallback
       const vid = new URL(p.url).searchParams.get("v");
       return navigator.onLine ? `<iframe src="https://www.youtube-nocookie.com/embed/${esc(vid)}?rel=0" title="${esc(p.name || "YouTube video")}" class="aspect-video w-full" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`
-        : `<a href="${esc(p.url)}" target="_blank" rel="noopener"><img src="${p.thumb}" alt="" class="max-h-[80vh] max-w-full"></a>`;
+        : `<a href="${esc(p.url)}" target="_blank" rel="noopener" class="flex max-h-full"><img src="${p.thumb}" alt="" class="max-h-full max-w-full object-contain"></a>`;
     }
-    if (p.kind === "book") return p.cover || p.thumb ? `<img src="${p.cover || p.thumb}" alt="Cover of ${esc(p.name)}" class="max-h-[80vh] max-w-full rounded-md shadow-lg">` : `<span class="text-fg3">${icon("book-open", 48)}</span>`;
+    if (p.kind === "book") return p.cover || p.thumb ? `<img src="${p.cover || p.thumb}" alt="Cover of ${esc(p.name)}" class="max-h-full max-w-full rounded-md object-contain shadow-lg">` : `<span class="text-fg3">${icon("book-open", 48)}</span>`;
     const m = p.media[i];
-    if (!m) return p.thumb ? `<img src="${p.thumb}" alt="" class="max-h-[88vh] max-w-full">` : "";
-    const el = m.kind === "video" ? `<video src="${m.url}" controls autoplay playsinline class="max-h-[88vh] max-w-full"></video>` : `<img src="${m.url}" alt="" class="max-h-[88vh] max-w-full">`;
+    if (!m) return p.thumb ? `<img src="${p.thumb}" alt="" class="max-h-full max-w-full object-contain">` : "";
+    const el = m.kind === "video" ? `<video src="${m.url}" controls autoplay playsinline class="max-h-full max-w-full"></video>` : `<img src="${m.url}" alt="" class="max-h-full max-w-full object-contain">`;
     const nav = p.media.length > 1 ? `<button class="slide absolute top-1/2 left-3 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white" data-step="-1" aria-label="Previous image">${icon("chevron-left")}</button>
       <button class="slide absolute top-1/2 right-3 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white" data-step="1" aria-label="Next image">${icon("chevron-right")}</button>
       <span class="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-black/55 px-2 font-mono text-xs text-white">${i + 1}/${p.media.length}</span>` : "";
@@ -440,8 +504,8 @@ async function openItem(id) {
                 p.details.unavailable ? "unavailable on YouTube" : "", p.kind === "book" ? esc(p.details.year || "") : date,
                 p.details.likes != null ? `${fmt(p.details.likes)} likes` : "", p.details.pages ? `${p.details.pages} pages` : ""].filter(Boolean).join(" · ");
   d.innerHTML = `
-  <div class="grid max-h-[92vh] grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] max-md:h-full max-md:max-h-none max-md:grid-cols-1 max-md:grid-rows-[auto_minmax(0,1fr)]">
-    <div class="stage relative flex min-h-80 items-center justify-center max-md:h-[42dvh] max-md:min-h-0 [&>a>img]:max-h-full [&>img]:max-h-full [&>video]:max-h-full ${p.kind === "book" ? "bg-raised p-8 max-md:p-4" : "bg-black"}">${stage()}</div>
+  <div class="grid h-full grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)] max-md:grid-cols-1 max-md:grid-rows-[auto_minmax(0,1fr)]">
+    <div class="stage relative flex min-h-0 items-center justify-center overflow-hidden max-md:h-[42dvh] ${p.kind === "book" ? "bg-raised p-8 max-md:p-4" : "bg-black"}">${stage()}</div>
     <div class="flex min-h-0 flex-col">
       <div class="flex items-center gap-1 border-b border-line px-4 py-2">
         <span class="inline-flex items-center gap-2 text-sm text-fg2">${dot(plat.color)}${plat.name}</span>

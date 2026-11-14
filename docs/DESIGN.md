@@ -109,7 +109,7 @@ Each step only handles new items, so an update costs minutes.
 
 ### UI
 
-The UI is one page. Tailwind v4 CSS and a Lucide icon subset are prebuilt by `scripts/build_ui.sh` and committed, so users have no build step and the page ships about 10 KB of CSS and icons instead of a 770 KB runtime. Custom CSS is used only for the canvas map. The list API is slim (gzip, about 430 KB for 4,400 items); long texts load per item and the map layout after the first paint. Thumbnails are 256 px WebP. Lighthouse: Performance 99 desktop / 86 mobile, Accessibility 100, Best practices 100.
+The UI is one page. Tailwind v4 CSS and a Lucide icon subset are prebuilt by `scripts/build_ui.sh` and committed, so users have no build step and the page ships about 10 KB of CSS and icons instead of a 770 KB runtime. Custom CSS is used only for the canvas map. The layout is stored with its proportions (longest spread along x); the page turns it to the window's orientation, scales it evenly (at most 1.3× stretch), and the Spacing setting (stored in the browser) pushes apart items closer than a share of the average gap, then fits the map back in. The list API is slim (gzip, about 430 KB for 4,400 items); long texts load per item and the map layout after the first paint. Thumbnails are 256 px WebP. Lighthouse: Performance 99 desktop / 86 mobile, Accessibility 100, Best practices 100.
 
 - **Top bar:**
   - search;

@@ -101,13 +101,17 @@ def run(only_if_changed: bool = False):
     layout = {}
     for name, x in views.items():
         xy = umap(x, 2)
+        xy = xy - xy.mean(0)
+        xy = xy @ np.linalg.svd(xy, full_matrices=False)[2].T  # longest spread along x; the frontend turns it to the window
         lo, hi = np.percentile(xy, [0.5, 99.5], axis=0)  # 0..1 for the frontend; a few outliers sit on the edge
         xy = np.clip((xy - lo) / (hi - lo + 1e-9), 0, 1)
+        aspect = float((hi - lo)[0] / ((hi - lo)[1] + 1e-9))  # width/height before the 0..1 scaling
         assign = clusters(umap(x, 5))
         labels = labels_for(texts, assign, tags if use_tags else None)
         layout[name] = {
             "points": {i: [round(float(p[0]), 4), round(float(p[1]), 4), int(a)] for i, p, a in zip(ids, xy, assign)},
             "clusters": {int(k): v for k, v in labels.items()},
+            "aspect": round(aspect, 3),
         }
         print(f"{name}: {len(labels)} clusters, {int((assign == -1).sum())} unclustered")
     LAYOUT_PATH.write_text(json.dumps(layout))

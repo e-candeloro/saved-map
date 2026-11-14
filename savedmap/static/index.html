@@ -73,6 +73,9 @@ dialog::backdrop { background:rgb(0 0 0 / .55); }
         <div id="empty" class="hidden px-4 py-16 text-center text-sm text-fg2"></div>
         <canvas id="map" class="hidden" aria-label="Map of saved items, similar ones close together. Click a thumbnail to open it."></canvas>
         <div id="mapNote" class="pointer-events-none absolute bottom-3 left-4 hidden font-mono text-xs text-fg3"></div>
+        <select id="spacing" aria-label="Spacing between items on the map" title="Spread out crowded clusters" class="absolute right-3 bottom-[8.25rem] hidden h-8 rounded-lg border border-line bg-surface px-2 text-sm text-fg2 shadow-[0_1px_2px_rgb(0_0_0/0.08)] md:right-4 md:bottom-[8.5rem]">
+          <option value="off">Spacing: off</option><option value="low">Spacing: low</option><option value="medium">Spacing: medium</option><option value="high">Spacing: high</option>
+        </select>
         <div id="mapCtl" class="absolute right-3 bottom-3 hidden flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.08)] md:right-4 md:bottom-4" role="group" aria-label="Map zoom">
           <button class="icon-btn rounded-none" data-zoom="in" title="Zoom in (+)" aria-label="Zoom in"><span data-icon="plus"></span></button>
           <button class="icon-btn rounded-none border-t border-line" data-zoom="out" title="Zoom out (−)" aria-label="Zoom out"><span data-icon="minus"></span></button>
@@ -85,6 +88,6 @@ dialog::backdrop { background:rgb(0 0 0 / .55); }
 </div>
 <dialog id="settingsDlg" class="m-auto max-h-[90vh] w-[min(760px,94vw)] overflow-hidden rounded-2xl border border-line bg-surface p-0 text-fg max-md:h-dvh max-md:max-h-none max-md:w-screen max-md:max-w-none max-md:rounded-none max-md:border-0"></dialog>
 <div id="toast" role="status" aria-live="polite" class="pointer-events-none fixed bottom-4 left-1/2 z-50 hidden -translate-x-1/2 rounded-lg bg-fg px-3 py-2 text-sm text-bg shadow-lg"></div>
-<dialog id="dlg" class="m-auto max-h-[92vh] w-[min(1080px,94vw)] overflow-hidden rounded-2xl border border-line bg-surface p-0 text-fg max-md:h-dvh max-md:max-h-none max-md:w-screen max-md:max-w-none max-md:rounded-none max-md:border-0"></dialog>
+<dialog id="dlg" class="m-auto h-[min(92vh,960px)] w-[min(1080px,94vw)] overflow-hidden rounded-2xl border border-line bg-surface p-0 text-fg max-md:h-dvh max-md:max-h-none max-md:w-screen max-md:max-w-none max-md:rounded-none max-md:border-0"></dialog>
 </body>
 </html>

@@ -39,7 +39,7 @@ Then it lets you **find, rediscover and act on** them. Nothing leaves your machi
 - **One library, every platform.** Filter by platform, or by your own collections, boards, shelves and playlists.
 - **Topics across platforms.** *Books & reading* shows your Goodreads books *and* the reels and pins about books. You can edit the topic list.
 - **Search by meaning.** "that pasta reel", "stoicism", "living room ideas": search covers what's said, shown and written.
-- **A map of your taste.** Similar items sit together, by look, by topic, or both, with clusters named automatically. Smooth with thousands of thumbnails.
+- **A map of your taste.** Similar items sit together, by look, by topic, or both, with clusters named automatically. It turns to fit your screen, a Spacing control opens up crowded clusters, and it stays smooth with thousands of thumbnails.
 - **Related items.** Open anything and see the 8 most similar saves from every platform: a book leads to the reels about it.
 - **One Update button.** It fetches only what's new, then downloads and processes it. A built-in **ban guard** keeps automated access gentle.
 - **Comfortable to use, on desktop and phone.** Light/dark/auto theme, keyboard shortcuts, filters kept in the URL, settings in the app, a filter drawer and pinch-to-zoom on mobile. Lighthouse: Performance 99 desktop / 86 mobile, Accessibility 100.
