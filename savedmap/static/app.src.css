@@ -31,6 +31,7 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 @layer components {
+  [data-icon]:empty { @apply inline-block size-4 shrink-0; }  /* icons are drawn by app.js: keep their space so nothing moves */
   .btn { @apply inline-flex h-8 items-center gap-2 rounded-lg border border-line bg-raised px-3 text-sm text-fg transition-colors duration-150 ease-out hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50 max-md:h-9; }
   .btn-primary { @apply inline-flex h-8 items-center gap-2 rounded-lg bg-accent px-3 text-sm font-medium text-on-accent transition-opacity duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 max-md:h-9; }
   .icon-btn { @apply inline-flex size-8 items-center justify-center rounded-lg text-fg2 transition-colors duration-150 hover:bg-raised hover:text-fg max-md:size-9; }

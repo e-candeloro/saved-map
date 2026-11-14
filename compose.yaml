@@ -3,7 +3,7 @@
 services:
   savedmap:
     build: .
-    image: savedmap:0.3.0
+    image: savedmap:0.3.1
     restart: unless-stopped
     ports:
       - "127.0.0.1:8770:8770"

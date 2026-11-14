@@ -151,6 +151,10 @@ def test_related_and_item_api(con):
     det = client.get("/api/item/instagram:p1").json()
     assert det["summary"] == "summary 1" and det["tags"] == ["a"] and det["text"] == "post 1"
     assert client.get("/api/item/nope:x").status_code == 404
+    con.execute("UPDATE items SET download_done=1"); con.commit()
+    page = client.get("/").text  # first screen inside the page, CSS inlined
+    assert '<script id="boot"' in page and '"total":4' in page and '"multi":true' in page
+    assert 'href="/static/app.css"' not in page and 'rel="preload" as="image"' not in page  # test items have no thumbs
 
 
 def test_read_only_copy(con, monkeypatch):

@@ -11,7 +11,7 @@ import numpy as np
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, ValidationError
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config, db, update
@@ -31,9 +31,24 @@ def writable():
         raise HTTPException(403, "This copy is read-only: updates and settings live on the machine that syncs it")
 
 
+FIRST_SCREEN = 120  # tiles the grid renders before scrolling; app.js renders the same number
+
+
 @app.get("/")
 def index():
-    return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
+    """The page with its CSS inlined and the first screen of the grid in it, so the first thumbnails load
+    straight away instead of after the full item list (that one follows in the background)."""
+    con = db.connect()
+    first = list_items(con, FIRST_SCREEN, active_only=True)
+    boot = {"items": first, "total": con.execute("SELECT COUNT(*) FROM items WHERE download_done=1 AND status='active'").fetchone()[0],
+            "multi": con.execute("SELECT COUNT(DISTINCT source) FROM items WHERE download_done=1").fetchone()[0] > 1}
+    thumbs = [f"/thumbs/{db.item_dir(p['id'])}.webp" for p in first[:6] if p["thumb"]]
+    head = "".join(f'<link rel="preload" as="image" href="{t}"{" fetchpriority=high" if not n else ""}>' for n, t in enumerate(thumbs))
+    data_json = json.dumps(boot, separators=(",", ":")).replace("</", "<\\/")  # can't close the script tag early
+    head += f'<script id="boot" type="application/json">{data_json}</script>'
+    html = (STATIC / "index.html").read_text()
+    html = html.replace('<link rel="stylesheet" href="/static/app.css">', f"<style>{(STATIC / 'app.css').read_text()}</style>")
+    return HTMLResponse(html.replace("</head>", head + "</head>", 1), headers={"Cache-Control": "no-cache"})
 
 
 LIST_DETAILS = ("likes", "rating", "year", "pages", "duration", "unavailable", "domain")  # the rest comes with /api/item
@@ -44,6 +59,12 @@ def data():
     """Everything the grid, map and filters need, kept small (gzip on top): long texts such as
     transcripts and on-screen text are fetched per item when it is opened."""
     con = db.connect()
+    cols = [dict(r) for r in con.execute("""SELECT c.id, c.source, c.name, COUNT(m.item_id) n FROM collections c
+                                            LEFT JOIN memberships m ON m.collection_id=c.id GROUP BY c.id HAVING n > 0 ORDER BY c.name""")]
+    return {"items": list_items(con), "collections": cols}
+
+
+def list_items(con, limit: int | None = None, active_only: bool = False) -> list[dict]:
     members: dict[str, list[str]] = {}
     for r in con.execute("SELECT collection_id, item_id FROM memberships"):
         members.setdefault(r["item_id"], []).append(r["collection_id"])
@@ -54,10 +75,11 @@ def data():
         if r["kind"] == "video":
             video.add(r["item_id"])
     items = []
-    for r in con.execute("""SELECT i.id, i.source, i.kind, i.url, i.author, i.title AS item_title, substr(i.text, 1, 200) AS text,
+    for r in con.execute(f"""SELECT i.id, i.source, i.kind, i.url, i.author, i.title AS item_title, substr(i.text, 1, 200) AS text,
                                    i.created_at, i.details, i.status, a.title AS llm_title, a.summary, a.tags, a.topics
                             FROM items i LEFT JOIN analysis a ON a.item_id = i.id
-                            WHERE i.download_done=1 ORDER BY i.saved_pos"""):
+                            WHERE i.download_done=1 {"AND i.status='active'" if active_only else ""} ORDER BY i.saved_pos
+                            {f"LIMIT {int(limit)}" if limit else ""}"""):
         details = json.loads(r["details"] or "{}")
         items.append({
             "id": r["id"], "source": r["source"], "kind": r["kind"], "url": r["url"], "author": r["author"],
@@ -68,9 +90,7 @@ def data():
             "topics": json.loads(r["topics"]) if r["topics"] else [],
             "thumb": db.thumb_path(r["id"]).exists(),  # the browser builds /thumbs/<source>/<id>.webp
         })
-    cols = [dict(r) for r in con.execute("""SELECT c.id, c.source, c.name, COUNT(m.item_id) n FROM collections c
-                                            LEFT JOIN memberships m ON m.collection_id=c.id GROUP BY c.id HAVING n > 0 ORDER BY c.name""")]
-    return {"items": items, "collections": cols}
+    return items
 
 
 @app.get("/api/layout")

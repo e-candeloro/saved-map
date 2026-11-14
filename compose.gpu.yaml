@@ -6,7 +6,7 @@ services:
     build:
       args:
         TORCH: cu128             # the CUDA build in uv.lock
-    image: savedmap:0.3.0-cuda
+    image: savedmap:0.3.1-cuda
     deploy:
       resources:
         reservations:

@@ -8,7 +8,6 @@
 <meta name="theme-color" content="#141415" media="(prefers-color-scheme: dark)">
 <title>SavedMap</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='6' height='6' rx='1.5' fill='%23c2410c'/%3E%3Crect x='9' y='1' width='6' height='6' rx='1.5' fill='%23737373'/%3E%3Crect x='1' y='9' width='6' height='6' rx='1.5' fill='%23737373'/%3E%3Crect x='9' y='9' width='6' height='6' rx='1.5' fill='%23737373'/%3E%3C/svg%3E">
-<link rel="preload" href="/api/data" as="fetch" crossorigin>
 <script>  /* apply the saved theme before first paint */
 try { const t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}
 </script>
@@ -37,7 +36,7 @@ dialog::backdrop { background:rgb(0 0 0 / .55); }
       <button role="tab" data-tab="grid" class="tab inline-flex h-8 items-center gap-2 rounded-md px-3 text-sm text-fg2 aria-selected:bg-surface aria-selected:text-fg aria-selected:shadow-sm md:h-7" title="Grid (g)"><span data-icon="layout-grid"></span><span class="max-sm:sr-only">Grid</span></button>
       <button role="tab" data-tab="map" class="tab inline-flex h-8 items-center gap-2 rounded-md px-3 text-sm text-fg2 aria-selected:bg-surface aria-selected:text-fg aria-selected:shadow-sm md:h-7" title="Map (m)"><span data-icon="map"></span><span class="max-sm:sr-only">Map</span></button>
     </div>
-    <select id="mode" aria-label="Arrange the map by" class="order-5 h-9 rounded-lg border border-line bg-raised px-2 text-sm text-fg2 md:order-none md:h-8">
+    <select id="mode" aria-label="Arrange the map by" class="order-5 hidden h-9 rounded-lg border border-line bg-raised px-2 text-sm text-fg2 md:order-none md:h-8">
       <option value="mixed">By look and topic</option><option value="visual">By look</option><option value="topic">By topic</option>
     </select>
     <div class="ml-auto flex items-center gap-1 md:gap-2">

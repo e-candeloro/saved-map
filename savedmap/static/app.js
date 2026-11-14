@@ -50,12 +50,22 @@ function writeURL(push = true) {
 }
 
 // ---------- data ----------
-async function load() {
-  const d = await (await fetch("/api/data")).json();
-  for (const p of d.items) p.thumb = p.thumb ? `/thumbs/${p.id.replace(":", "/")}.webp` : null;
-  S.items = d.items; S.cols = d.collections;
+function setItems(items, cols) {
+  for (const p of items) p.thumb = p.thumb ? `/thumbs/${p.id.replace(":", "/")}.webp` : null;
+  S.items = items; S.cols = cols;
   S.byId = Object.fromEntries(S.items.map(p => [p.id, p]));
   S.colById = Object.fromEntries(S.cols.map(c => [c.id, c]));
+}
+async function load() {
+  const d = await (await fetch("/api/data")).json();
+  setItems(d.items, d.collections);
+}
+function boot() {  // the first screen of the grid ships inside the page: show it before the full list arrives
+  const el = $("#boot");
+  if (!el || S.tab !== "grid" || S.q || S.platform || S.topic || S.col || S.cluster !== null || S.removed) return;
+  S.boot = JSON.parse(el.textContent);
+  setItems(S.boot.items, []);
+  render();
 }
 async function loadLayout() {  // the map arrives after the first paint; the grid never waits for it
   S.layout = await (await fetch("/api/layout")).json();
@@ -174,8 +184,8 @@ function emptyMessage() {
 let multiPlatform = false;
 function render() {
   const list = visible();
-  multiPlatform = new Set(S.items.map(p => p.source)).size > 1;
-  renderChips(list.length);
+  multiPlatform = S.boot ? S.boot.multi : new Set(S.items.map(p => p.source)).size > 1;
+  renderChips(S.boot ? S.boot.total : list.length);
   document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === S.tab));
   $("#mode").value = S.mode;
   $("#mode").classList.toggle("hidden", S.tab !== "map");
@@ -189,11 +199,15 @@ function render() {
   $("#mapCtl").classList.toggle("flex", S.tab === "map");
   $("#spacing").classList.toggle("hidden", S.tab !== "map");
   if (S.tab === "grid") {
-    $("#grid").innerHTML = list.slice(0, 120).map((p, n) => tile(p, n)).join("");
+    const first = list.slice(0, 120), key = [multiPlatform, S.platform, ...first.map(p => p.id)].join("|");
+    if (key !== gridKey) {  // the same tiles (the boot screen, then the full list) are not drawn twice
+      gridKey = key;
+      $("#grid").innerHTML = first.map((p, n) => tile(p, n)).join("");
+    } else while ($("#grid").children.length > first.length) $("#grid").lastElementChild.remove();  // pending restarts at 120
     pending = list.slice(120);  // the rest renders as you scroll (keeps the DOM small)
-  } else invalidate();
+  } else { gridKey = ""; invalidate(); }
 }
-let pending = [];
+let pending = [], gridKey = "";
 new IntersectionObserver(entries => {
   if (entries[0].isIntersecting && S.tab === "grid" && pending.length)
     $("#grid").insertAdjacentHTML("beforeend", pending.splice(0, 120).map(p => tile(p)).join(""));
@@ -773,7 +787,9 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { re
   applyTheme(document.documentElement.dataset.theme || "auto");
   readURL();
   $("#q").value = S.q;
+  boot();
   await load();
+  S.boot = null;
   renderSide();
   loadLayout();
   S.q ? runSearch() : render();
