@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS items (
     id TEXT PRIMARY KEY,            -- <source>:<native id>
     source TEXT NOT NULL,           -- instagram | pinterest | goodreads
     native_id TEXT NOT NULL,
-    kind TEXT NOT NULL,             -- post | pin | book
+    kind TEXT NOT NULL,             -- post | pin | book | video | bookmark
     url TEXT,                       -- the item on its platform
     author TEXT,
     title TEXT,                     -- platform title (books, pins); the LLM title lives in analysis

@@ -1,12 +1,12 @@
 # SavedMap: agent guide
 
-Local library of a person's saves from Instagram, Pinterest, YouTube and Goodreads: download, analyse (transcripts, OCR, embeddings, a small LLM), then browse by collection, topic, map and search in a local web app. Read `docs/DESIGN.md` before changing behaviour; `README.md` is the user-facing summary.
+Local library of a person's saves from Instagram, Pinterest, YouTube, Goodreads and Karakeep: download, analyse (transcripts, OCR, embeddings, a small LLM), then browse by collection, topic, map and search in a local web app. Read `docs/DESIGN.md` before changing behaviour; `README.md` is the user-facing summary.
 
 ## Map
 
 | Path | What |
 | --- | --- |
-| `savedmap/sources/` | one connector per platform, all on the contract in `base.py` (`Item`, `Batch`, `Blocked`, `NeedsLogin`) |
+| `savedmap/sources/` | one connector per platform, all on the contract in `base.py` (`Item`, `Batch`, `Blocked`, `NeedsLogin`, `Unavailable`) |
 | `savedmap/update.py` | `savedmap update`: guard → fetch → store → download → process → refine → cluster → `data/hooks/after-update` if present |
 | `savedmap/process.py` | thumbs, frames, speech, OCR, visual, text, topics (each stage only does what is missing) |
 | `savedmap/refine.py`, `llm.py` | LLM title/summary/tags through one OpenAI-compatible client (Ollama by default), pydantic output |

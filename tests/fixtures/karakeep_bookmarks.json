@@ -1,0 +1,18 @@
+[
+  {"id": "bk1link", "createdAt": "2026-10-16T10:00:00.000Z", "title": null, "archived": false, "favourited": true,
+   "note": "Read the section on caching", "summary": null,
+   "tags": [{"id": "t1", "name": "programming", "attachedBy": "human"}],
+   "content": {"type": "link", "url": "https://blog.example.com/caching", "title": "Caching, explained",
+               "description": "How caches work.", "imageUrl": "https://blog.example.com/og.png",
+               "imageAssetId": "as-banner", "screenshotAssetId": "as-shot", "author": "Ada", "publisher": null},
+   "assets": [{"id": "as-banner", "assetType": "bannerImage"}, {"id": "as-shot", "assetType": "screenshot"}]},
+  {"id": "bk2note", "createdAt": "2026-10-15T10:00:00.000Z", "title": null, "archived": false, "favourited": false,
+   "note": null, "summary": null, "tags": [],
+   "content": {"type": "text", "text": "Gift ideas\n- a good pen", "sourceUrl": null},
+   "assets": []},
+  {"id": "bk3pdf", "createdAt": "2026-10-14T10:00:00.000Z", "title": "Thesis draft", "archived": true, "favourited": false,
+   "note": null, "summary": null, "tags": [],
+   "content": {"type": "asset", "assetType": "pdf", "assetId": "as-pdf", "fileName": "draft.pdf",
+               "sourceUrl": "https://uni.example.edu/draft.pdf", "content": "Abstract. We study maps."},
+   "assets": [{"id": "as-pdf", "assetType": "bookmarkAsset"}, {"id": "as-pdfshot", "assetType": "assetScreenshot"}]}
+]

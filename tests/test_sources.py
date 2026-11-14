@@ -67,3 +67,57 @@ def test_youtube_takeout(tmp_path):
     assert youtube.to_item("dQw4w9WgXcQ", {}, [], None).details["unavailable"]
     song = youtube.to_item("YZEzhBBuf7E", {}, [("music-library", "Music library")], songs["YZEzhBBuf7E"])
     assert (song.title, song.author, song.text) == ("Suite 2", "Hiroyuki Sawano", "Song by Hiroyuki Sawano, album OST")
+
+
+def test_karakeep_api(monkeypatch):
+    import httpx
+    import pytest
+    from savedmap.config import Config, Karakeep, Sources
+    from savedmap.sources import karakeep
+    from savedmap.sources.base import Unavailable
+
+    bookmarks = json.loads((FIX / "karakeep_bookmarks.json").read_text())
+    calls = []
+
+    def server(req: httpx.Request) -> httpx.Response:
+        calls.append(req.url.path)
+        if req.headers["authorization"] != "Bearer k3y":
+            return httpx.Response(401)
+        path, cursor = req.url.path.removeprefix("/api/v1"), req.url.params.get("cursor")
+        if path == "/bookmarks":  # two pages
+            return httpx.Response(200, json={"bookmarks": bookmarks[2:], "nextCursor": None} if cursor
+                                  else {"bookmarks": bookmarks[:2], "nextCursor": "c2"})
+        if path == "/lists":
+            return httpx.Response(200, json={"lists": [{"id": "l1", "name": "Dev", "type": "manual"},
+                                                       {"id": "l2", "name": "Smart", "type": "smart"}]})
+        if path == "/lists/l1/bookmarks":
+            return httpx.Response(200, json={"bookmarks": [bookmarks[0]], "nextCursor": None})
+        if path.endswith("/signed-url"):  # signed with the server's internal address
+            return httpx.Response(200, json={"signedUrl": f"http://localhost:3000/api/assets/{path.split('/')[2]}?token=t"})
+        return httpx.Response(404)
+
+    real = httpx.Client
+    monkeypatch.setattr(karakeep.httpx, "Client", lambda **kw: real(transport=httpx.MockTransport(server), **kw))
+    monkeypatch.setenv("KARAKEEP_API_KEY", "k3y")
+    cfg = Config(sources=Sources(karakeep=Karakeep(enabled=True, url="https://kk.example.com/")))
+    src = karakeep.Karakeep()
+
+    batch = src.fetch(cfg, known={"bk2note"}, full=False, max_pages=40)
+    assert batch.complete and [i.native_id for i in batch.items] == ["bk1link", "bk2note", "bk3pdf"]
+    link, note, pdf = batch.items
+    assert link.kind == "bookmark" and link.url == "https://kk.example.com/dashboard/preview/bk1link"
+    assert (link.title, link.author) == ("Caching, explained", "Ada") and link.collections == [("l1", "Dev")]
+    assert link.text == "How caches work.\n\nRead the section on caching\n\nTags: programming"
+    assert link.details["link"] == "https://blog.example.com/caching" and link.details["domain"] == "blog.example.com"
+    assert link.media[0].url == "https://kk.example.com/api/assets/as-banner?token=t"  # Karakeep's stored banner, not the site's
+    assert note.title == "Gift ideas" and note.media == [] and note.details["link"] is None
+    assert pdf.media[0].url.endswith("/as-pdfshot?token=t") and pdf.text == "Abstract. We study maps."
+    assert "/api/v1/lists/l2/bookmarks" not in calls and "/api/v1/assets/as-pdf/signed-url" not in calls
+
+    calls.clear()  # dry run: one request, nothing signed
+    dry = src.fetch(cfg, known=set(), full=False, max_pages=1)
+    assert len(calls) == 1 and not dry.complete and all(not i.media for i in dry.items)
+
+    monkeypatch.setenv("KARAKEEP_API_KEY", "wrong")
+    with pytest.raises(Unavailable, match="rejected"):
+        src.fetch(cfg, known=set(), full=False, max_pages=40)

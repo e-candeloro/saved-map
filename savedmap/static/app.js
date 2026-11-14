@@ -18,8 +18,9 @@ const PLATFORMS = {
   pinterest: { name: "Pinterest", icon: "pin", color: "#d0202e", collections: "Boards" },
   youtube: { name: "YouTube", icon: "circle-play", color: "#e5484d", collections: "Playlists" },
   goodreads: { name: "Goodreads", icon: "book-open", color: "#8a6a3f", collections: "Shelves" },
+  karakeep: { name: "Karakeep", icon: "bookmark", color: "#3f7fd8", collections: "Lists" },
 };
-const KIND = { post: "post", pin: "pin", book: "book", video: "video" };
+const KIND = { post: "post", pin: "pin", book: "book", video: "video", bookmark: "bookmark" };
 // muted, distinguishable cluster colours (map frames and dots only)
 const PALETTE = ["#4e79a7", "#e15759", "#59a14f", "#b07aa1", "#f28e2b", "#76b7b2", "#9c755f", "#edc948", "#ff9da7", "#5f8f3a", "#8c6bb1", "#d37295", "#499894", "#bc8a5f"];
 const color = c => c < 0 ? "#9a9a9a" : PALETTE[c % PALETTE.length];
@@ -435,7 +436,7 @@ async function openItem(id) {
   };
   const heading = p.kind === "book" || p.kind === "video" ? p.name || p.title : (p.title || p.name || `${KIND[p.kind]} by ${p.author}`);
   const dur = p.details.duration ? `${Math.floor(p.details.duration / 60)}:${String(Math.round(p.details.duration % 60)).padStart(2, "0")}` : "";
-  const meta = [p.author ? (p.kind === "book" ? `by ${esc(p.author)}` : p.kind === "video" ? esc(p.author) : `@${esc(p.author)}`) : "", dur,
+  const meta = [p.author ? (p.kind === "book" ? `by ${esc(p.author)}` : p.kind === "video" || p.kind === "bookmark" ? esc(p.author) : `@${esc(p.author)}`) : "", dur,
                 p.details.unavailable ? "unavailable on YouTube" : "", p.kind === "book" ? esc(p.details.year || "") : date,
                 p.details.likes != null ? `${fmt(p.details.likes)} likes` : "", p.details.pages ? `${p.details.pages} pages` : ""].filter(Boolean).join(" · ");
   d.innerHTML = `

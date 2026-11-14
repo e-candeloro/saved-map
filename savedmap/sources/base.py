@@ -17,7 +17,7 @@ class Media(BaseModel):
 
 class Item(BaseModel):
     native_id: str = Field(pattern=r"^[\w.-]+$")  # used in file paths
-    kind: Literal["post", "pin", "book", "video"]
+    kind: Literal["post", "pin", "book", "video", "bookmark"]
     url: str
     author: str | None = None
     title: str | None = None
@@ -41,6 +41,10 @@ class Blocked(Exception):
 
 class NeedsLogin(Exception):
     """No valid session: the user has to run `savedmap connect <source>`."""
+
+
+class Unavailable(Exception):
+    """The source can't be reached or rejects its settings (server off, wrong key): skip it this time."""
 
 
 class Source:

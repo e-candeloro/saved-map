@@ -4,7 +4,7 @@
 
 **All the things you saved on socials,in one map you own.**
 
-Instagram saves, Pinterest boards, YouTube playlists and Goodreads shelves in one searchable library on your own computer, with a map that groups similar things together.
+Instagram saves, Pinterest boards, YouTube playlists, Goodreads shelves and Karakeep bookmarks in one searchable library on your own computer, with a map that groups similar things together.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)
@@ -52,14 +52,15 @@ Then it lets you **find, rediscover and act on** them. Nothing leaves your machi
 | Pinterest | boards via [gallery-dl](https://github.com/mikf/gallery-dl)'s client | only for secret boards | `/connect-pinterest` |
 | YouTube | Google Takeout playlists and music library; thumbnails only, plays embedded | no | `/connect-youtube` |
 | Goodreads | the official library export plus Open Library covers | no | `/connect-goodreads` |
+| Karakeep | your own server's REST API, with an API key | no (a key) | `/connect-karakeep` |
 
-Want another platform (Karakeep, Reddit, …)? The `/add-source` skill walks you through a connector. There's one small contract, and tests run without network.
+Want another platform (Reddit, …)? The `/add-source` skill walks you through a connector. There's one small contract, and tests run without network.
 
 ## Quick start
 
 You need Python 3.12 via [uv](https://docs.astral.sh/uv/), ffmpeg and Chrome. An NVIDIA GPU with 4 GB is enough but optional. Developed and tested on Linux; macOS should work but is untested, and Windows is untested.
 
-**With [Claude Code](https://claude.com/claude-code) (recommended):** clone the repo, open Claude Code in it, run `/savedmap-setup`, then `/connect-instagram` (or `-pinterest`, `-youtube`, `-goodreads`). The skills check your machine, explain each platform's risk, and run everything step by step.
+**With [Claude Code](https://claude.com/claude-code) (recommended):** clone the repo, open Claude Code in it, run `/savedmap-setup`, then `/connect-instagram` (or `-pinterest`, `-youtube`, `-goodreads`, `-karakeep`). The skills check your machine, explain each platform's risk, and run everything step by step.
 
 **By hand:**
 

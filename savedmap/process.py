@@ -62,7 +62,7 @@ def ensure_rows(con):
 
 
 def title_card(item_id: str, title: str, author: str | None) -> str:
-    """A plain cover for a book without one (Open Library had none), so it gets a thumbnail and a map spot."""
+    """A plain cover for a book or bookmark without a picture, so it gets a thumbnail and a map spot."""
     from PIL import ImageDraw, ImageFont
     import textwrap
     im = Image.new("RGB", (400, 600), "#ece6da")
@@ -84,7 +84,7 @@ def title_card(item_id: str, title: str, author: str | None) -> str:
 
 
 def stage_thumbs(con):
-    for r in con.execute("""SELECT i.id, i.title, i.author FROM items i WHERE i.kind='book' AND i.download_done=1
+    for r in con.execute("""SELECT i.id, i.title, i.author FROM items i WHERE i.kind IN ('book', 'bookmark') AND i.download_done=1
                             AND NOT EXISTS (SELECT 1 FROM media m WHERE m.item_id=i.id)""").fetchall():
         con.execute("INSERT INTO media (item_id, idx, kind, path) VALUES (?,0,'cover',?)",
                     (r["id"], title_card(r["id"], r["title"] or "Untitled", r["author"])))

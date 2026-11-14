@@ -1,6 +1,6 @@
 # SavedMap design
 
-SavedMap is a local library of everything you saved on social platforms. It covers Instagram saved posts, Pinterest pins, YouTube playlists and Goodreads books. You can browse it by collection, on a map that groups similar items, and with search by what an item shows, says or is about. Everything is downloaded and runs on your own machine. The goal is to give people their saved content back, not to make money.
+SavedMap is a local library of everything you saved on social platforms. It covers Instagram saved posts, Pinterest pins, YouTube playlists, Goodreads books and Karakeep bookmarks. You can browse it by collection, on a map that groups similar items, and with search by what an item shows, says or is about. Everything is downloaded and runs on your own machine. The goal is to give people their saved content back, not to make money.
 
 Status: v0.2 prototype. A read-only Docker copy serves the library to other devices; syncing and processing stay on your computer.
 
@@ -27,7 +27,7 @@ Status: v0.2 prototype. A read-only Docker copy serves the library to other devi
 
 1. Clone the repo and open Claude Code in it.
 2. Run `/savedmap-setup`. It checks the GPU, ffmpeg and uv, installs Ollama with a small model, and writes `data/config.toml`.
-3. Connect each platform with `/connect-instagram`, `/connect-pinterest` or `/connect-goodreads`. Each skill:
+3. Connect each platform with `/connect-instagram`, `/connect-pinterest`, `/connect-goodreads` or `/connect-karakeep`. Each skill:
    - explains the risk;
    - opens the login, or explains the export;
    - runs a one-request dry run;
@@ -65,6 +65,7 @@ sources/<platform>.py ──Batch──▶ update.py ──▶ download.py ─�
 | Instagram | Real Chrome with a dedicated profile, logged in once, calls the saved-feed JSON the web app uses. ~21 posts per request, 3–8 s apart with longer breaks. Stops at the first page of known posts. | signed CDN links → shared downloader, no cookies | low, with the guard |
 | Pinterest | [gallery-dl](https://github.com/mikf/gallery-dl)'s Pinterest web-API client, used as a library, with requests 2–6 s apart. Boards come sorted by last pin added, so an update stops at the first board with nothing new. Pins are keyed by image signature, which stays stable with or without login. Login cookies are exported from the same Chrome profile only when secret boards are wanted. | image or mp4 links → shared downloader | low; none without login |
 | Goodreads | The official library CSV export: the API was retired in 2020, and by Nov 2026 the public shelf RSS feeds return 404 and shelf pages need a login. The newest export in `~/Downloads` is read on each update; it is the whole library, so removed books are noticed too. | covers and subjects from Open Library's public API, once per new book | none, no login |
+| Karakeep | The self-hosted server's REST API with the user's API key. Every update reads all bookmarks (100 per request) and the manual lists, so deleted bookmarks are noticed. | the banner image or screenshot Karakeep already stored, through a signed link per new bookmark → shared downloader; title card when there is none | none: the user's own server |
 
 ### Ban guard
 
@@ -84,7 +85,7 @@ SQLite in WAL mode, one file in the data folder next to `media/`, `thumbs/`, `fr
 | Table | Holds |
 | --- | --- |
 | `items` | `id` = `<source>:<native_id>`; `source`, `kind`, `url`, `author`, `title`, `text`, `details` JSON, `status` (active / removed), `saved_pos` |
-| `collections` + `memberships` | Instagram collections, Pinterest boards, Goodreads shelves |
+| `collections` + `memberships` | Instagram collections, Pinterest boards, Goodreads shelves, Karakeep lists |
 | `media` | files per item: kind, path, source URL |
 | `analysis` | transcript, OCR, embeddings, LLM title, summary, tags; `topics`: the 1–3 entries of the editable [`topics.txt`](../savedmap/topics.txt) closest to the item by e5 similarity (more reliable than asking the 1.7B LLM) |
 
@@ -151,7 +152,7 @@ The skills live in `.claude/skills/`. They guide and call the CLI; the Python co
 | Skill | Purpose |
 | --- | --- |
 | `savedmap-setup` | install, checks, config |
-| `connect-instagram`, `connect-pinterest`, `connect-goodreads` | connect one platform: risk, login or link, dry run, first sync, verify |
+| `connect-instagram`, `connect-pinterest`, `connect-goodreads`, `connect-karakeep` | connect one platform: risk, login or link, dry run, first sync, verify |
 | `add-source` | write a new connector against the contract |
 | `unslop` | design pass on the UI (third party, CC BY 4.0) |
 
@@ -197,4 +198,4 @@ Updating means exporting again (Takeout can also schedule an export every 2 mont
 
 ## Later
 
-Karakeep and other sources, a list view with sorting, curation if real use asks for it.
+More sources, a list view with sorting, curation if real use asks for it.

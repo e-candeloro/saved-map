@@ -36,6 +36,11 @@ takeout = "~/Downloads/Takeout"
 skip_playlists = ["Watch later"]
 music_library = true
 
+[sources.karakeep]
+enabled = false
+url = ""                  # your Karakeep server, e.g. https://karakeep.example.com
+api_key_env = "KARAKEEP_API_KEY"  # Karakeep → Settings → API Keys; the key goes in this environment variable
+
 [models]
 device = "auto"           # auto | cuda | cpu (Whisper, OCR, embeddings)
 
@@ -88,11 +93,18 @@ class YouTube(Strict):
     music_library: bool = Field(True, description="Also import your YouTube Music library songs")
 
 
+class Karakeep(Strict):
+    enabled: bool = False
+    url: str = Field("", description="Your Karakeep server, e.g. https://karakeep.example.com")
+    api_key_env: str = Field("KARAKEEP_API_KEY", description="Environment variable holding a Karakeep API key (Settings → API Keys)")
+
+
 class Sources(Strict):
     instagram: Instagram = Instagram()
     pinterest: Pinterest = Pinterest()
     goodreads: Goodreads = Goodreads()
     youtube: YouTube = YouTube()
+    karakeep: Karakeep = Karakeep()
 
 
 class Endpoint(Strict):

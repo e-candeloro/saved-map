@@ -9,7 +9,7 @@ from datetime import datetime
 from . import config, db
 from .config import Config
 from .sources import SOURCES
-from .sources.base import Batch, Blocked, NeedsLogin, Source
+from .sources.base import Batch, Blocked, NeedsLogin, Source, Unavailable
 
 
 def _t(con, name, key) -> float:
@@ -122,7 +122,7 @@ def sync_source(con, cfg: Config, src: Source, full: bool, dry_run: bool, force:
         print(f"[{name}] stopped: {e}\n  Paused for {cfg.guard.cooldown_hours:g} h. Open the platform in a normal browser "
               f"to check the account, and `savedmap connect {name}` if it asks to log in again.")
         return 0
-    except NeedsLogin as e:
+    except (NeedsLogin, Unavailable) as e:
         print(f"[{name}] {e}")
         return 0
     new = sum(it.native_id not in known for it in batch.items)
