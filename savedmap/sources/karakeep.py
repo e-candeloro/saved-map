@@ -7,8 +7,9 @@ banner image, else its screenshot), fetched through short-lived signed links, so
 never needs the key and nothing is requested from the bookmarked sites.
 """
 import os
+import re
 from datetime import datetime
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 import httpx
 
@@ -23,6 +24,21 @@ def epoch(iso: str | None) -> int | None:
         return int(datetime.fromisoformat(iso).timestamp()) if iso else None
     except ValueError:
         return None
+
+
+def same_as(link: str | None) -> str | None:
+    """The library id of a link to an Instagram post or a YouTube video, the platforms whose ids are in their URLs."""
+    if not link:
+        return None
+    u = urlsplit(link)
+    host = (u.hostname or "").removeprefix("www.").removeprefix("m.")
+    if host == "instagram.com" and (m := re.match(r"/(?:[\w.]+/)?(?:p|reel|reels|tv)/([\w-]+)", u.path)):
+        return f"instagram:{m[1]}"
+    if host in ("youtube.com", "music.youtube.com"):
+        vid = parse_qs(u.query).get("v", [None])[0] or (m[1] if (m := re.match(r"/shorts/([\w-]{11})", u.path)) else None)
+    else:
+        vid = u.path[1:12] if host == "youtu.be" else None
+    return f"youtube:{vid}" if vid and re.fullmatch(r"[\w-]{11}", vid) else None
 
 
 def picture(b: dict) -> str | None:
@@ -53,6 +69,7 @@ def to_item(b: dict, base: str, lists: list[tuple[str, str]], image_url: str | N
         details={"link": link, "domain": urlsplit(link).hostname if link else None, "tags": tags,
                  "favourite": b.get("favourited") or None, "archived": b.get("archived") or None},
         raw={k: b.get(k) for k in ("id", "createdAt", "title", "note", "archived", "favourited")},
+        same_as=same_as(link),
     )
 
 

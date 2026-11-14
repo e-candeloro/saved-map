@@ -118,6 +118,15 @@ def test_karakeep_api(monkeypatch):
     dry = src.fetch(cfg, known=set(), full=False, max_pages=1)
     assert len(calls) == 1 and not dry.complete and all(not i.media for i in dry.items)
 
+    assert link.same_as is None
+    for url, want in [("https://www.instagram.com/reel/DU579rAjNfo/?igsh=x", "instagram:DU579rAjNfo"),
+                      ("https://instagram.com/someone/p/Ab-c_1/", "instagram:Ab-c_1"),
+                      ("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=3", "youtube:dQw4w9WgXcQ"),
+                      ("https://youtu.be/dQw4w9WgXcQ?si=x", "youtube:dQw4w9WgXcQ"),
+                      ("https://www.youtube.com/shorts/dQw4w9WgXcQ", "youtube:dQw4w9WgXcQ"),
+                      ("https://www.instagram.com/someone/", None), ("https://www.youtube.com/@chan", None)]:
+        assert karakeep.same_as(url) == want, url
+
     monkeypatch.setenv("KARAKEEP_API_KEY", "wrong")
     with pytest.raises(Unavailable, match="rejected"):
         src.fetch(cfg, known=set(), full=False, max_pages=40)

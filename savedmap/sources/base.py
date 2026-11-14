@@ -27,6 +27,9 @@ class Item(BaseModel):
     media: list[Media] = []
     details: dict = {}  # extras for the viewer: likes, rating, ...
     raw: dict = {}
+    # the same thing saved on another platform ("instagram:<code>"): if that item exists, this one isn't
+    # stored separately; the other item joins this one's collections instead
+    same_as: str | None = None
 
 
 class Batch(BaseModel):

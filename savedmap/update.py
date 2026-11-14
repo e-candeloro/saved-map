@@ -63,9 +63,19 @@ def store(con, name: str, batch: Batch, resumed: bool) -> int:
     # positions: a complete list renumbers everything; new saves go before the known ones; a resumed
     # run (older items) goes after them
     base = 0 if batch.complete else (hi or 0) + 1 if resumed else (lo or 0) - len(batch.items)
-    new = 0
+    if batch.complete:  # this source's collections on other platforms' items (merged duplicates) are re-added below
+        con.execute("DELETE FROM memberships WHERE collection_id LIKE ? AND item_id NOT LIKE ?", (f"{name}:%", f"{name}:%"))
+    new = merged = 0
     for i, it in enumerate(batch.items):
         iid = f"{name}:{it.native_id}"
+        if it.same_as and not it.same_as.startswith(f"{name}:") and \
+                con.execute("SELECT 1 FROM items WHERE id=?", (it.same_as,)).fetchone():
+            merged += 1  # already in the library from its own platform: it joins this item's collections
+            add_collections(con, name, it.same_as, it.collections)
+            if iid in known:  # stored separately before the other platform had it
+                for table, col in (("memberships", "item_id"), ("media", "item_id"), ("analysis", "item_id"), ("items", "id")):
+                    con.execute(f"DELETE FROM {table} WHERE {col}=?", (iid,))
+            continue
         is_new = iid not in known
         new += is_new
         con.execute(
@@ -79,12 +89,9 @@ def store(con, name: str, batch: Batch, resumed: bool) -> int:
              json.dumps(it.details), json.dumps(it.raw), base + i))
         if batch.complete:
             con.execute("UPDATE items SET saved_pos=? WHERE id=?", (base + i, iid))
-        con.execute("DELETE FROM memberships WHERE item_id=?", (iid,))
-        for cid, cname in it.collections:
-            con.execute("""INSERT INTO collections (id, source, name) VALUES (?,?,?)
-                           ON CONFLICT(id) DO UPDATE SET name=COALESCE(NULLIF(excluded.name, ''), name)""",
-                        (f"{name}:{cid}", name, cname))
-            con.execute("INSERT OR IGNORE INTO memberships VALUES (?,?)", (f"{name}:{cid}", iid))
+        # only this source's memberships: other platforms' lists holding a duplicate of this item stay
+        con.execute("DELETE FROM memberships WHERE item_id=? AND collection_id LIKE ?", (iid, f"{name}:%"))
+        add_collections(con, name, iid, it.collections)
         if is_new or (not known[iid] and it.media):  # fresh links for anything not downloaded yet (signed URLs expire)
             con.execute("DELETE FROM media WHERE item_id=?", (iid,))
             con.executemany("INSERT INTO media (item_id, idx, kind, path, url) VALUES (?,?,?,?,?)",
@@ -95,7 +102,17 @@ def store(con, name: str, batch: Batch, resumed: bool) -> int:
         con.execute(f"""UPDATE items SET status='removed', removed_at=? WHERE source=? AND status='active'
                         AND id NOT IN ({','.join('?' * len(ids))})""", (int(time.time()), name, *ids))
     con.commit()
+    if merged:
+        print(f"[{name}] {merged} already in the library from another platform: added to their lists there")
     return new
+
+
+def add_collections(con, name: str, item_id: str, collections: list[tuple[str, str]]):
+    for cid, cname in collections:
+        con.execute("""INSERT INTO collections (id, source, name) VALUES (?,?,?)
+                       ON CONFLICT(id) DO UPDATE SET name=COALESCE(NULLIF(excluded.name, ''), name)""",
+                    (f"{name}:{cid}", name, cname))
+        con.execute("INSERT OR IGNORE INTO memberships VALUES (?,?)", (f"{name}:{cid}", item_id))
 
 
 def sync_source(con, cfg: Config, src: Source, full: bool, dry_run: bool, force: bool = False) -> int:

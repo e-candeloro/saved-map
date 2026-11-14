@@ -24,6 +24,20 @@ def test_incremental_puts_new_saves_first(con):
     assert ids(con) == ["p4", "p3", "p2", "p1"]
 
 
+def test_duplicate_from_another_platform_is_merged(con):
+    update.store(con, "instagram", Batch(items=[item(1, [("c1", "Food")])], complete=True), resumed=False)
+    dup = Item(native_id="k1", kind="bookmark", url="https://kk/k1", collections=[("l1", "Recipes")], same_as="instagram:p1")
+    alone = Item(native_id="k2", kind="bookmark", url="https://kk/k2", same_as="instagram:missing")
+    update.store(con, "karakeep", Batch(items=[dup, alone], complete=True), resumed=False)
+    members = lambda: sorted(r[0] for r in con.execute("SELECT collection_id FROM memberships WHERE item_id='instagram:p1'"))
+    assert members() == ["instagram:c1", "karakeep:l1"]
+    assert [r[0] for r in con.execute("SELECT id FROM items WHERE source='karakeep'")] == ["karakeep:k2"]
+    update.store(con, "instagram", Batch(items=[item(1, [("c1", "Food")])]), resumed=False)  # its own sync keeps the list
+    assert members() == ["instagram:c1", "karakeep:l1"]
+    update.store(con, "karakeep", Batch(items=[alone], complete=True), resumed=False)  # bookmark deleted in Karakeep
+    assert members() == ["instagram:c1"]
+
+
 def test_resumed_run_appends_older_items(con):
     update.store(con, "instagram", Batch(items=[item(2), item(1)], cursor="c"), resumed=False)
     update.store(con, "instagram", Batch(items=[item(0)]), resumed=True)

@@ -28,6 +28,7 @@ Every `savedmap update` reads the whole list again. That's a few requests for hu
 ## Notes
 
 - Kinds: links show their stored picture and open the original page from the viewer's link; text notes and bookmarks without a picture get a plain title card. PDFs show their first-page screenshot and up to 4,000 characters of their text.
+- **Duplicates:** a bookmark of an Instagram post or reel, or of a YouTube video, that is already in the library isn't added twice. The existing item joins the bookmark's Karakeep lists instead, and the update says how many were merged.
 - Tags go into the searchable text and the description; Karakeep's own AI summary is used if it has one.
 - **Troubleshooting:**
   - "rejected the key": the variable is missing in that terminal or the key was revoked.
